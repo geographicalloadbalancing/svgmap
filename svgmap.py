@@ -22,17 +22,20 @@ def draw_datacenter(x, y, stats):
 	
 	# The various parts of the data center indicator are specified relative to (0, 0); they are then translated to the appropriate spot.
 	
+	# Dot indicating the exact location of the data center
+	dot = SVG.circle(cx='0', cy='0', r='2', style='fill:rgb(0,0,0)')
+	
 	label = SVG.text("I'm a data center!",
 		# Example animation based on http://www.w3.org/TR/2011/REC-SVG11-20110816/animate.html#AnimationElementsExample
-		SVG.set(attributeName="visibility", attributeType="CSS", to="visible", begin="3s", dur="6s", fill="freeze"),
+		SVG.set(attributeName="visibility", attributeType="CSS", to="visible", begin="1s", dur="6s", fill="freeze"),
 		SVG.animate(
 			calcMode='linear',
 			values='rgb(0,0,255); rgb(255,0,0); rgb(0,0,255); rgb(255,0,0); rgb(0,0,255); rgb(255,0,0)',
 			attributeName="fill", attributeType="CSS",
-			begin="3s", dur="6s", fill="freeze"
+			begin="1s", dur="6s", fill="freeze"
 		),
 		id='TextElement',
-		x='0', y='0',
+		x='5', y='0',
 		visibility='hidden',
 	)
 	# This would be a bar indicating some data center statistic
@@ -41,22 +44,25 @@ def draw_datacenter(x, y, stats):
 			calcMode='linear',
 			values='75;45;100;10;50;30;90;20',
 			attributeName="width",
-			begin="3s", dur="6s", fill="freeze"
+			begin="0s", dur="6s", fill="freeze"
 		),
-		x='0', y='10', height='10', width='100',
+		style='fill:rgb(0,255,0)',
+		x='-50', y='3', height='10', width='100',
 	)
 	another_bar = SVG.rect(
 		SVG.animate(
 			calcMode='linear',
 			values='15;80;100;60;80;0;20;90;50;75',
 			attributeName="width",
-			begin="3s", dur="6s", fill="freeze"
+			begin="0s", dur="6s", fill="freeze"
 		),
-		x='0', y='20', height='10', width='100',
+		style='fill:rgb(0,0,255)',
+		x='-50', y='13', height='10', width='100',
 	)
 	
 	# Transform everything
 	return SVG.g(
+		dot,
 		label,
 		some_bar,
 		another_bar,
