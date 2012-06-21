@@ -10,6 +10,7 @@ from sys import stdout as stdout ; stdout = stdout.buffer
 
 BACKGROUND_MAP_FILE = path.join(path.dirname(__file__), 'Blank_US_Map.svg')
 
+# Represents the current state of a particular data center
 DataCenterState = namedtuple('DataCenterState', ('foo', 'bar',))
 
 def draw_datacenter(x, y, stats):
@@ -19,13 +20,47 @@ def draw_datacenter(x, y, stats):
 	float(x)
 	float(y)
 	
-	return SVG.text("I'm a data center!",
+	# The various parts of the data center indicator are specified relative to (0, 0); they are then translated to the appropriate spot.
+	
+	label = SVG.text("I'm a data center!",
 		# Example animation based on http://www.w3.org/TR/2011/REC-SVG11-20110816/animate.html#AnimationElementsExample
 		SVG.set(attributeName="visibility", attributeType="CSS", to="visible", begin="3s", dur="6s", fill="freeze"),
-		SVG.animate({'from':"rgb(0,0,255)"}, attributeName="fill", attributeType="CSS", to="rgb(255,0,0)", begin="3s", dur="6s", fill="freeze"),
+		SVG.animate(
+			calcMode='linear',
+			values='rgb(0,0,255); rgb(255,0,0); rgb(0,0,255); rgb(255,0,0); rgb(0,0,255); rgb(255,0,0)',
+			attributeName="fill", attributeType="CSS",
+			begin="3s", dur="6s", fill="freeze"
+		),
 		id='TextElement',
-		x=str(x), y=str(y),
+		x='0', y='0',
 		visibility='hidden',
+	)
+	# This would be a bar indicating some data center statistic
+	some_bar = SVG.rect(
+		SVG.animate(
+			calcMode='linear',
+			values='75;45;100;10;50;30;90;20',
+			attributeName="width",
+			begin="3s", dur="6s", fill="freeze"
+		),
+		x='0', y='10', height='10', width='100',
+	)
+	another_bar = SVG.rect(
+		SVG.animate(
+			calcMode='linear',
+			values='15;80;100;60;80;0;20;90;50;75',
+			attributeName="width",
+			begin="3s", dur="6s", fill="freeze"
+		),
+		x='0', y='20', height='10', width='100',
+	)
+	
+	# Transform everything
+	return SVG.g(
+		label,
+		some_bar,
+		another_bar,
+		transform="translate({x},{y})".format(x=x, y=y)
 	)
 
 def generate_visualization(indata):
