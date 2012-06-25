@@ -4,6 +4,15 @@ exec env JAVA_OPTS='-Xss4M' scala -classpath 'anti-xml_2.9.1-0.3.jar' "$0" "$@"
 !#
 import com.codecommit.antixml._
 
+/** Convenience function to allow easy use of Anti-XML in XML literals.
+
+<p>Usage: {@code
+val antixml = <child attr="val">...</child>.convert
+<xmlliteral>{U(antixml)}</xmlliteral>.convert
+}</p>**/
+def U(antixml : Node) : scala.xml.NodeSeq = scala.xml.XML.loadString(antixml.toString)
+def U(antixml : Group[Node]) : scala.xml.NodeSeq = scala.xml.XML.loadString(antixml.toString)
+
 //@@@@SVG = ElementMaker(namespace="http://www.w3.org/2000/svg")
 
 
@@ -24,7 +33,6 @@ def draw_datacenter(x : Double, y : Double, stats : Blahblahblah.type) : Group[N
 	
 	// Dot indicating the exact location of the data center
 	val dot = <circle cx="0" cy="0" r="2" style="fill:rgb(0,0,0)" />.convert
-	println("dot{"+dot+"}")
 	
 	// Example animation based on http://www.w3.org/TR/2011/REC-SVG11-20110816/animate.html#AnimationElementsExample
 	val label = <text id="TextElement" x="5" y="0" visibility="hidden">
@@ -37,10 +45,9 @@ def draw_datacenter(x : Double, y : Double, stats : Blahblahblah.type) : Group[N
 			begin="1s" dur="6s" fill="freeze"
 		/>
 	</text>.convert
-	println("label{"+label+"}")
 	
 	// This would be a bar indicating some data center statistic
-	val some_bar = <rect style="fill:rgb(0,0,255)" x="-50" y="3" height="10" width="100">
+	val some_bar = <rect style="fill:rgb(0,255,0)" x="-50" y="3" height="10" width="100">
 		<animate
 			calcMode="linear"
 			values="75;45;100;10;50;30;90;20"
@@ -56,11 +63,10 @@ def draw_datacenter(x : Double, y : Double, stats : Blahblahblah.type) : Group[N
 			begin="0s" dur="6s" fill="freeze"
 		/>
 	</rect>.convert
-	println("some_bar{"+some_bar+"}")
 	
 	// Transform everything
 	<g transform={"translate(" + x + "," + y + ")"}>
-		{dot}{label}{some_bar}{another_bar}
+		{U(dot)}{U(label)}{U(some_bar)}{U(another_bar)}
 	</g>.convert
 }
 
@@ -72,9 +78,9 @@ def generate_visualization(indata : Blahblahblah.type) : Group[Node] = {
 	// Append the overlay to the SVG document.
 	//@@@@@ Currently just a dummy transform. To do: Replace with the real transform
 	val overlay = <g transform="translate(100,100)">
-		{draw_datacenter(0, 0, Blahblahblah)}
-		{draw_datacenter(100, 200, Blahblahblah)}
-		{draw_datacenter(300, 50, Blahblahblah)}
+		{U(draw_datacenter(0, 0, Blahblahblah))}
+		{U(draw_datacenter(100, 200, Blahblahblah))}
+		{U(draw_datacenter(300, 50, Blahblahblah))}
 	</g>.convert
 	
 	// Append to the svg document as child
