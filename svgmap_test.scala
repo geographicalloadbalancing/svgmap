@@ -4,6 +4,13 @@ exec env JAVA_OPTS='-Xss4M' scala -classpath 'anti-xml_2.9.1-0.3.jar' "$0" "$@"
 !#
 import com.codecommit.antixml._
 
+// This is cool
+/** Enables mapping over 2-tuples. */
+// http://stackoverflow.com/questions/11198074/build-xml-literal-containing-anti-xml-object/11198223#11198223
+implicit def t2mapper[X, X0 <: X, X1 <: X](t: (X0, X1)) = new {
+	def map[R](f: X => R) = (f(t._1), f(t._2))
+}
+
 /** Convenience function to allow easy use of Anti-XML in XML literals.
 
 <p>Usage: {@code
@@ -46,6 +53,31 @@ def draw_datacenter(x : Double, y : Double, stats : Blahblahblah.type) : Group[N
 		/>
 	</text>.convert
 	
+	// Draw the sector chart.
+	val sector_g = <g>{
+		val COLORS = List("rgb(255,0,0)", "rgb(0,255,0)", "rgb(0,0,255)")
+		val NUM_SECTORS = COLORS.length
+		0 until NUM_SECTORS map { s ⇒ {
+			// @@@@ Dummy data
+			// Radius of the sector
+			val r = 10 * s
+			
+			val (start_angle, end_angle) = (s, s + 1) map (_ * 2 * math.Pi / NUM_SECTORS)
+			val (start_x, end_x) = (start_angle, end_angle ) map (+r * math.sin(_))
+			val (start_y, end_y) = (start_angle, end_angle ) map (-r * math.cos(_))
+			
+			val path : String = (
+				/* center */ "M 0,0" +
+				/* draw line */ " L " + start_x + "," + start_y +
+				/* draw arc */ " A " + r + "," + r + " 0 0 1 " + end_x + "," + end_y +
+				/* close with line */ " Z"
+			)
+			// @@@@ Animate
+			<path d={path} style={"fill: " + COLORS(s) + "; stroke: black; stroke-width: 1px"}>
+			</path>
+		}}
+	}</g>.convert
+	
 	// This would be a bar indicating some data center statistic
 	val some_bar = <rect style="fill:rgb(0,255,0)" x="-50" y="3" height="10" width="100">
 		<animate
@@ -66,7 +98,7 @@ def draw_datacenter(x : Double, y : Double, stats : Blahblahblah.type) : Group[N
 	
 	// Transform everything
 	<g transform={"translate(" + x + "," + y + ")"}>
-		{U(dot)}{U(label)}{U(some_bar)}{U(another_bar)}
+		{U(dot)}{U(label)}{U(some_bar)}{U(another_bar)}{U(sector_g)}
 	</g>.convert
 }
 
