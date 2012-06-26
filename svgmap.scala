@@ -40,14 +40,28 @@ private case object Blahblahblah
 /** Represents the current state of a particular data center. Each statistic should be in [0, 1]. */
 case class DataCenterState(stat0 : Double, stat1 : Double, stat2 : Double)
 
+/** A real-world point, specified by a latitude and longitude. */
+case class WorldPt(lat : Double, long : Double) {
+	def toDevicePt = {
+		//@@@@@ Currently just a dummy transform. To do: Replace with the real transform
+		val x = long + 100
+		val y = 100 - lat
+		DevicePt(x, y)
+	}
+}
+
+/** A point in device coordinates. Note that y increases as you go <em>down</em>. */
+case class DevicePt(x : Double, y : Double)
+
 /**
 Describes a data center, and encapsulates various statistics for it over time.
 */
-case class DataCenter(coords : (Double, Double), stats : Seq[DataCenterState])
+case class DataCenter(coords : WorldPt, stats : Seq[DataCenterState])
 
 /** Draws an animated data center indicator at the specified coordinates, displaying the given stats over time. Returns an SVG fragment to be inserted into the SVG document. */
 def draw_datacenter(dc : DataCenter) : Group[Node] = {
-	val DataCenter((x, y), stats) = dc
+	val DataCenter(coords, stats) = dc
+	val DevicePt(x, y) = coords.toDevicePt
 	
 	// The various parts of the data center indicator are specified relative to (0, 0); they are then translated to the appropriate spot.
 	
@@ -105,10 +119,7 @@ def generate_visualization(indata : Seq[DataCenter]) : Array[Byte] = {
 	
 	//@@@@ To do: set " rdf:resource="http://purl.org/dc/dcmitype/StillImage" />" to animation
 	
-	// Use an overlay that transforms real-world coordinates (lat-long) into the SVG input's space.
-	// Append the overlay to the SVG document.
-	//@@@@@ Currently just a dummy transform. To do: Replace with the real transform
-	val overlay = <g transform="translate(100,100)">
+	val overlay = <g>
 		{indata map (dc ⇒ U(draw_datacenter(dc)))}
 	</g>.convert
 	
@@ -127,9 +138,9 @@ def test = {
 		(GenSeq fill 20)(randDC).seq
 	}
 	val dcs = List(
-		DataCenter((0, 0), randomStats),
-		DataCenter((100, 200), randomStats),
-		DataCenter((300, 50), randomStats)
+		DataCenter(WorldPt(0, 0), randomStats),
+		DataCenter(WorldPt(-200, 100), randomStats),
+		DataCenter(WorldPt(-50, 300), randomStats)
 	)
 	System.out write generate_visualization(dcs)
 }
