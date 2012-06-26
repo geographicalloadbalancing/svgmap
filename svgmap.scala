@@ -20,9 +20,6 @@ val antixml = <child attr="val">...</child>.convert
 private def U(antixml : Node) : scala.xml.NodeSeq = scala.xml.XML.loadString(antixml.toString)
 private def U(antixml : Group[Node]) : scala.xml.NodeSeq = scala.xml.XML.loadString(antixml.toString)
 
-//@@@@SVG = ElementMaker(namespace="http://www.w3.org/2000/svg")
-
-
 /** The original blank map */
 val BACKGROUND_MAP : Elem = {
 	XML fromInputStream (ClassLoader getSystemResourceAsStream "base_map.svg")
@@ -34,19 +31,20 @@ private def animation_duration(n : Int) : String = (0.5 * n) + "s"
 /** Method to use for animation. (For example, "linear" ⇒ smoothly interpolate between data points; "discrete" ⇒ jump) */
 val CALC_MODE = "linear"
 
-// @@@@ Placeholder
-private case object Blahblahblah
-
 /** Represents the current state of a particular data center. Each statistic should be in [0, 1]. */
 case class DataCenterState(stat0 : Double, stat1 : Double, stat2 : Double)
+
+private val IMAGE_WIDTH = 1181
+private val IMAGE_HEIGHT = 731
 
 /** A real-world point, specified by a latitude and longitude in degrees. */
 case class WorldPt(lat : Double, long : Double) {
 	def toDevicePt = {
-		//@@@@@ Currently just a dummy transform. To do: Replace with the real transform
-		val x = long + 100
-		val y = 100 - lat
-		DevicePt(x, y)
+		// This transform is given on the Wikipedia page http://en.wikipedia.org/wiki/Template:Location_map_USA2
+		val xscaled = 50.0 + 124.03149777329222 * ((1.9694462586094064-(lat * math.Pi / 180)) * math.sin(0.6010514667026994 * (long + 96) * math.Pi / 180))
+		val yscaled = 50.0 + 1.6155950752393982 * 124.03149777329222 * (0.02613325650382181 - (1.3236744353715044 - (1.9694462586094064 - (lat * math.Pi / 180)) * math.cos(0.6010514667026994 * (long + 96) * math.Pi / 180)))
+		// According to the docs, this maps onto a 100×100 square, so we must scale to the actual image size
+		DevicePt(xscaled * IMAGE_WIDTH / 100, yscaled * IMAGE_HEIGHT / 100)
 	}
 }
 
@@ -116,9 +114,6 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 }
 
 def generate_visualization(indata : Seq[DataCenter]) : Array[Byte] = {
-	
-	//@@@@ To do: set " rdf:resource="http://purl.org/dc/dcmitype/StillImage" />" to animation
-	
 	val overlay = <g>
 		{indata map (dc ⇒ U(draw_datacenter(dc)))}
 	</g>.convert
@@ -138,9 +133,9 @@ def test = {
 		(GenSeq fill 20)(randDC).seq
 	}
 	val dcs = List(
-		DataCenter(WorldPt(0, 0), randomStats),
-		DataCenter(WorldPt(-200, 100), randomStats),
-		DataCenter(WorldPt(-50, 300), randomStats)
+		DataCenter(WorldPt(41, -104), randomStats),
+		DataCenter(WorldPt(34, -84), randomStats),
+		DataCenter(WorldPt(42, -87), randomStats)
 	)
 	System.out write generate_visualization(dcs)
 }
