@@ -42,25 +42,18 @@ def draw_datacenter(x : Double, y : Double, stats : Blahblahblah.type) : Group[N
 	val dot = <circle cx="0" cy="0" r="2" style="fill:rgb(0,0,0)" />.convert
 	
 	// Example animation based on http://www.w3.org/TR/2011/REC-SVG11-20110816/animate.html#AnimationElementsExample
-	val label = <text id="TextElement" x="5" y="0" visibility="hidden">
+	val label = <text id="TextElement" x="15" y="0">
 		I'm a data center!
-		<set attributeName="visibility" attributeType="CSS" to="visible" begin="1s" dur="6s" fill="freeze" />
-		<animate
-			calcMode="linear"
-			values="rgb(0,0,255); rgb(255,0,0); rgb(0,0,255); rgb(255,0,0); rgb(0,0,255); rgb(255,0,0)"
-			attributeName="fill" attributeType="CSS"
-			begin="1s" dur="6s" fill="freeze"
-		/>
 	</text>.convert
 	
-	// Draw the sector chart.
+	// Draw the sector chart, indicating some data center statistics.
 	val sector_g = <g>{
-		val COLORS = List("rgb(255,0,0)", "rgb(0,255,0)", "rgb(0,0,255)")
+		val COLORS = List("rgb(255,128,128)", "rgb(128,255,128)", "rgb(128,128,255)")
 		val NUM_SECTORS = COLORS.length
 		0 until NUM_SECTORS map { s ⇒ {
 			// @@@@ Dummy data
-			// Radius of the sector
-			val r = 10 * s
+			/** Radius of a full sector (for value = 1.0) */
+			val r = 30
 			
 			val (start_angle, end_angle) = (s, s + 1) map (_ * 2 * math.Pi / NUM_SECTORS)
 			val (start_x, end_x) = (start_angle, end_angle ) map (+r * math.sin(_))
@@ -72,33 +65,21 @@ def draw_datacenter(x : Double, y : Double, stats : Blahblahblah.type) : Group[N
 				/* draw arc */ " A " + r + "," + r + " 0 0 1 " + end_x + "," + end_y +
 				/* close with line */ " Z"
 			)
-			// @@@@ Animate
+			// @@@@ Animate. Strategy: use <animateTransform> to scale the sector according to the value.
 			<path d={path} style={"fill: " + COLORS(s) + "; stroke: black; stroke-width: 1px"}>
+				<animateTransform
+					attributeName="transform" attributeType="XML"
+					type="scale" calcMode="linear"
+					values="0.2; 0.6; 0.3; 1; 0.5; 0.4; 0; 0.7; 0.4"
+					dur="6s" fill="freeze"
+				/>
 			</path>
 		}}
 	}</g>.convert
 	
-	// This would be a bar indicating some data center statistic
-	val some_bar = <rect style="fill:rgb(0,255,0)" x="-50" y="3" height="10" width="100">
-		<animate
-			calcMode="linear"
-			values="75;45;100;10;50;30;90;20"
-			attributeName="width"
-			begin="0s" dur="6s" fill="freeze"
-		/>
-	</rect>.convert
-	val another_bar = <rect style="fill:rgb(0,0,255)" x="-50" y="13" height="10" width="100">
-		<animate
-			calcMode="linear"
-			values="15;80;100;60;80;0;20;90;50;75"
-			attributeName="width"
-			begin="0s" dur="6s" fill="freeze"
-		/>
-	</rect>.convert
-	
-	// Transform everything
+	// Translate everything to the desired data center location
 	<g transform={"translate(" + x + "," + y + ")"}>
-		{U(dot)}{U(label)}{U(some_bar)}{U(another_bar)}{U(sector_g)}
+		{U(dot)}{U(label)}{U(sector_g)}
 	</g>.convert
 }
 
