@@ -1,6 +1,6 @@
 #!/bin/sh
 # Need to expand stack size due to deep recursion in the XML library
-exec env JAVA_OPTS='-Xss16M' scala -classpath 'anti-xml_2.9.1-0.3.jar' "$0" "$@"
+exec env JAVA_OPTS='-Xss32M' scala -classpath 'anti-xml_2.9.1-0.3.jar' "$0" "$@"
 !#
 import com.codecommit.antixml._
 import scala.collection.GenSeq
