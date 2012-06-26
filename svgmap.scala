@@ -31,14 +31,24 @@ val BACKGROUND_MAP : Elem = {
 /** The total time the animation should run, if there are <var>n</var> time steps to display. */
 private def animation_duration(n : Int) : String = (0.5 * n) + "s"
 
+/** Method to use for animation. (For example, "linear" ⇒ smoothly interpolate between data points; "discrete" ⇒ jump) */
+val CALC_MODE = "linear"
+
 // @@@@ Placeholder
 private case object Blahblahblah
 
 /** Represents the current state of a particular data center. Each statistic should be in [0, 1]. */
 case class DataCenterState(stat0 : Double, stat1 : Double, stat2 : Double)
 
+/**
+Describes a data center, and encapsulates various statistics for it over time.
+*/
+case class DataCenter(coords : (Double, Double), stats : Seq[DataCenterState])
+
 /** Draws an animated data center indicator at the specified coordinates, displaying the given stats over time. Returns an SVG fragment to be inserted into the SVG document. */
-def draw_datacenter(x : Double, y : Double, stats : Seq[DataCenterState]) : Group[Node] = {
+def draw_datacenter(dc : DataCenter) : Group[Node] = {
+	val DataCenter((x, y), stats) = dc
+	
 	// The various parts of the data center indicator are specified relative to (0, 0); they are then translated to the appropriate spot.
 	
 	// Dot indicating the exact location of the data center
@@ -77,7 +87,7 @@ def draw_datacenter(x : Double, y : Double, stats : Seq[DataCenterState]) : Grou
 			<path d={path} style={"fill: " + COLORS(s) + "; stroke: black; stroke-width: 1px"}>
 				<animateTransform
 					attributeName="transform" attributeType="XML"
-					type="scale" calcMode="linear"
+					type="scale" calcMode={CALC_MODE}
 					values={sector_stats map (_(s)) mkString ";"}
 					dur={animation_duration(stats.length)} fill="freeze"
 				/>
@@ -91,22 +101,15 @@ def draw_datacenter(x : Double, y : Double, stats : Seq[DataCenterState]) : Grou
 	</g>.convert
 }
 
-def generate_visualization(indata : Blahblahblah.type) : Array[Byte] = {
+def generate_visualization(indata : Seq[DataCenter]) : Array[Byte] = {
 	
 	//@@@@ To do: set " rdf:resource="http://purl.org/dc/dcmitype/StillImage" />" to animation
-	
-	def randomStats = {
-		def randDC = DataCenterState(math.random, math.random, math.random)
-		(GenSeq fill 20)(randDC).seq
-	}
 	
 	// Use an overlay that transforms real-world coordinates (lat-long) into the SVG input's space.
 	// Append the overlay to the SVG document.
 	//@@@@@ Currently just a dummy transform. To do: Replace with the real transform
 	val overlay = <g transform="translate(100,100)">
-		{U(draw_datacenter(0, 0, randomStats))}
-		{U(draw_datacenter(100, 200, randomStats))}
-		{U(draw_datacenter(300, 50, randomStats))}
+		{indata map (dc ⇒ U(draw_datacenter(dc)))}
 	</g>.convert
 	
 	// Append to the svg document as child
@@ -118,4 +121,17 @@ def generate_visualization(indata : Blahblahblah.type) : Array[Byte] = {
 }
 
 //@@@test
-System.out write generate_visualization(Blahblahblah)
+def test = {
+	def randomStats = {
+		def randDC = DataCenterState(math.random, math.random, math.random)
+		(GenSeq fill 20)(randDC).seq
+	}
+	val dcs = List(
+		DataCenter((0, 0), randomStats),
+		DataCenter((100, 200), randomStats),
+		DataCenter((300, 50), randomStats)
+	)
+	System.out write generate_visualization(dcs)
+}
+
+test
