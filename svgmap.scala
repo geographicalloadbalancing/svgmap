@@ -25,7 +25,7 @@ private def U(antixml : Group[Node]) : scala.xml.NodeSeq = scala.xml.XML.loadStr
 
 /** The original blank map */
 val BACKGROUND_MAP : Elem = {
-	XML fromInputStream (ClassLoader getSystemResourceAsStream "Blank_US_Map.svg")
+	XML fromInputStream (ClassLoader getSystemResourceAsStream "base_map.svg")
 }
 
 /** The total time the animation should run, if there are <var>n</var> time steps to display. */
@@ -40,7 +40,7 @@ private case object Blahblahblah
 /** Represents the current state of a particular data center. Each statistic should be in [0, 1]. */
 case class DataCenterState(stat0 : Double, stat1 : Double, stat2 : Double)
 
-/** A real-world point, specified by a latitude and longitude. */
+/** A real-world point, specified by a latitude and longitude in degrees. */
 case class WorldPt(lat : Double, long : Double) {
 	def toDevicePt = {
 		//@@@@@ Currently just a dummy transform. To do: Replace with the real transform
