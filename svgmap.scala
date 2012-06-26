@@ -55,7 +55,7 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	val dot = <circle cx="0" cy="0" r="2" style="fill:rgb(0,0,0)" />.convert
 	
 	// Example animation based on http://www.w3.org/TR/2011/REC-SVG11-20110816/animate.html#AnimationElementsExample
-	val label = <text id="TextElement" x="15" y="0">
+	val label = <text x="15" y="0">
 		I'm a data center!
 	</text>.convert
 	
