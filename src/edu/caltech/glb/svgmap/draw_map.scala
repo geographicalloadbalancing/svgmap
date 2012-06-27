@@ -1,16 +1,9 @@
-#!/bin/sh
-# Need to expand stack size due to deep recursion in the XML library
-exec env JAVA_OPTS='-Xss32M' scala -classpath 'anti-xml_2.9.1-0.3.jar' "$0" "$@"
-!#
-import com.codecommit.antixml._
-import scala.collection.GenSeq
+package edu.caltech.glb
+package object svgmap extends svgmap.svgmap_types {
 
-// This is cool
-/** Enables mapping over 2-tuples. */
-// http://stackoverflow.com/questions/11198074/build-xml-literal-containing-anti-xml-object/11198223#11198223
-implicit def t2mapper[X, X0 <: X, X1 <: X](t: (X0, X1)) = new {
-	def map[R](f: X => R) = (f(t._1), f(t._2))
-}
+import com.codecommit.antixml._
+
+
 
 /** Convenience function to allow easy use of Anti-XML in XML literals.
 <p>Usage: {@code
@@ -22,7 +15,7 @@ private def U(antixml : Group[Node]) : scala.xml.NodeSeq = scala.xml.XML.loadStr
 
 /** The original blank map */
 val BACKGROUND_MAP : Elem = {
-	XML fromInputStream (ClassLoader getSystemResourceAsStream "base_map.svg")
+	XML fromInputStream (ClassLoader getSystemResourceAsStream "edu/caltech/glb/svgmap/base_map.svg")
 }
 
 /** The total time the animation should run, if there are <var>n</var> time steps to display. */
@@ -30,31 +23,6 @@ private def animation_duration(n : Int) : String = (0.5 * n) + "s"
 
 /** Method to use for animation. (For example, "linear" ⇒ smoothly interpolate between data points; "discrete" ⇒ jump) */
 val CALC_MODE = "linear"
-
-/** Represents the current state of a particular data center. Each statistic should be in [0, 1]. */
-case class DataCenterState(stat0 : Double, stat1 : Double, stat2 : Double)
-
-private val IMAGE_WIDTH = 1181
-private val IMAGE_HEIGHT = 731
-
-/** A real-world point, specified by a latitude and longitude in degrees. */
-case class WorldPt(lat : Double, long : Double) {
-	def toDevicePt = {
-		// This transform is given on the Wikipedia page http://en.wikipedia.org/wiki/Template:Location_map_USA2
-		val xscaled = 50.0 + 124.03149777329222 * ((1.9694462586094064-(lat * math.Pi / 180)) * math.sin(0.6010514667026994 * (long + 96) * math.Pi / 180))
-		val yscaled = 50.0 + 1.6155950752393982 * 124.03149777329222 * (0.02613325650382181 - (1.3236744353715044 - (1.9694462586094064 - (lat * math.Pi / 180)) * math.cos(0.6010514667026994 * (long + 96) * math.Pi / 180)))
-		// According to the docs, this maps onto a 100×100 square, so we must scale to the actual image size
-		DevicePt(xscaled * IMAGE_WIDTH / 100, yscaled * IMAGE_HEIGHT / 100)
-	}
-}
-
-/** A point in device coordinates. Note that y increases as you go <em>down</em>. */
-case class DevicePt(x : Double, y : Double)
-
-/**
-Describes a data center, and encapsulates various statistics for it over time.
-*/
-case class DataCenter(coords : WorldPt, stats : Seq[DataCenterState])
 
 /** Draws an animated data center indicator at the specified coordinates, displaying the given stats over time. Returns an SVG fragment to be inserted into the SVG document. */
 def draw_datacenter(dc : DataCenter) : Group[Node] = {
@@ -126,18 +94,4 @@ def generate_visualization(indata : Seq[DataCenter]) : Array[Byte] = {
 	os.toByteArray
 }
 
-//@@@test
-def test = {
-	def randomStats = {
-		def randDC = DataCenterState(math.random, math.random, math.random)
-		(GenSeq fill 20)(randDC).seq
-	}
-	val dcs = List(
-		DataCenter(WorldPt(41, -104), randomStats),
-		DataCenter(WorldPt(34, -84), randomStats),
-		DataCenter(WorldPt(42, -87), randomStats)
-	)
-	System.out write generate_visualization(dcs)
 }
-
-test
