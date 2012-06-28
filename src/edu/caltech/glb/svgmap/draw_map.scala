@@ -1,9 +1,11 @@
+/*
+Contains functions that generate an SVG visualization based on input data.
+*/
+
 package edu.caltech.glb
 package object svgmap extends svgmap.svgmap_types {
 
 import com.codecommit.antixml._
-
-
 
 /** Convenience function to allow easy use of Anti-XML in XML literals.
 <p>Usage: {@code
@@ -81,6 +83,7 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	</g>.convert
 }
 
+/** Generates an SVG map visualization according to the provided data. */
 def generate_visualization(indata : Seq[DataCenter]) : Array[Byte] = {
 	val overlay = <g>
 		{indata map (dc ⇒ U(draw_datacenter(dc)))}

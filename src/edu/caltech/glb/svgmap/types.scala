@@ -1,3 +1,7 @@
+/*
+Defines several data types representing data centers and their state.
+*/
+
 package edu.caltech.glb.svgmap
 class svgmap_types {
 
