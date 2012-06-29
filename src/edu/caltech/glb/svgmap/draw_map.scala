@@ -86,7 +86,7 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 
 /** Generates an SVG map visualization according to the provided data. */
 def generate_visualization(indata : Seq[DataCenter]) : Array[Byte] = {
-	val overlay = <g>
+	val overlay = <g id="overlay">
 		{indata map (dc ⇒ U(draw_datacenter(dc)))}
 	</g>.convert
 	
