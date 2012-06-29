@@ -34,8 +34,10 @@ Describes a data center, and encapsulates various statistics for it over time.
 */
 case class DataCenter(coords : WorldPt, stats : Seq[DataCenterState])
 
-/** Represents the current state of a particular data center. Each statistic should be in [0, 1]. */
-case class DataCenterState(stat0 : Double, stat1 : Double, stat2 : Double)
+/** Represents the current state of a particular data center. Each statistic should be in [0, 1].
+@param sector_stats a list of the statistics to be drawn in the sector chart
+*/
+case class DataCenterState(sector_stats : Seq[Double])
 
 
 }

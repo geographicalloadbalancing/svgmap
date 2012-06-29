@@ -42,9 +42,10 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	</text>.convert
 	
 	// Draw the sector chart, indicating some data center statistics.
-	val sector_stats = stats map (_ match {
+	/*val sector_stats = stats map (_ match {
 		case DataCenterState(a, b, c) ⇒ List(a, b, c)
-	})
+	})*/
+	val sector_stats = stats map (_.sector_stats)
 	val sector_g = <g>{
 		val NUM_SECTORS = sector_stats(0).length
 		// Evenly distributed around the color wheel

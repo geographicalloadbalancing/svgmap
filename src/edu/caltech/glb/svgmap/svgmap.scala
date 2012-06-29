@@ -12,7 +12,7 @@ import scala.collection.GenSeq
 /** A simple test program that generates a map using sample data. */
 object Main extends App {
 	def randomStats = {
-		def randDC = DataCenterState(math.random, math.random, math.random)
+		def randDC = DataCenterState(List(math.random, math.random, math.random))
 		(GenSeq fill 20)(randDC).seq
 	}
 	val dcs = List(
