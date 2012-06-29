@@ -15,17 +15,17 @@ object Main extends App {
 		def randDC = DataCenterState(List(math.random, math.random, math.random))
 		(GenSeq fill 20)(randDC).seq
 	}
-	/*def randomLineStat = {
+	def randomLineStat = {
 		def randLine = LineState(math.random)
 		(GenSeq fill 20)(randLine).seq
-	}*/
+	}
 	val dcs = List(
 		DataCenter(WorldPt(41, -104), randomStats),
 		DataCenter(WorldPt(34, -84), randomStats),
 		DataCenter(WorldPt(42, -87), randomStats)
 	)
 	val lines = List(
-		Line(WorldPt(40, -90), WorldPt(35, -100), null)
+		Line(WorldPt(40, -90), WorldPt(35, -100), randomLineStat)
 	)
 	System.out write generate_visualization(dcs, lines)
 }

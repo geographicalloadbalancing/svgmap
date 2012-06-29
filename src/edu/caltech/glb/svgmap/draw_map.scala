@@ -26,7 +26,8 @@ private def animation_duration(n : Int) : String = (0.5 * n) + "s"
 /** Method to use for animation. (For example, "linear" ⇒ smoothly interpolate between data points; "discrete" ⇒ jump) */
 val CALC_MODE = "linear"
 
-/** Draws an animated data center indicator at the specified coordinates, displaying the given stats over time. Returns an SVG fragment to be inserted into the SVG document. */
+/** Draws an animated data center indicator at the specified coordinates, displaying the given stats over time.
+@return an SVG fragment to be inserted into the SVG document. */
 def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	val DataCenter(coords, stats) = dc
 	val DevicePt(x, y) = coords.toDevicePt
@@ -84,15 +85,21 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	</g>.convert
 }
 
-/**
-Draw a line.
-*/
+/** Draws an animated line, displaying the given stats over time.
+@return an SVG fragment to be inserted into the SVG document. */
 def draw_line(line : Line) : Group[Node] = {
 	val Line(p1, p2, stat) = line
 	val dp1 = p1.toDevicePt
 	val dp2 = p2.toDevicePt
 	<line x1={dp1.x.toString} x2={dp2.x.toString} y1={dp1.y.toString} y2={dp2.y.toString}
-		 style="stroke: black; stroke-width: 1px;"></line>.convert
+		 style="stroke: black; stroke-width: 1px;">
+		<animate
+			attributeName="stroke-width"
+			calcMode={CALC_MODE}
+			values={stat map (_.line_stat) mkString ";"}
+			dur={animation_duration(stat.length)} fill="freeze"
+		/>
+	</line>.convert
 }
 
 
