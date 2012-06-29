@@ -84,10 +84,23 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	</g>.convert
 }
 
+/**
+Draw a line.
+*/
+def draw_line(line : Line) : Group[Node] = {
+	val Line(p1, p2, stat) = line
+	val dp1 = p1.toDevicePt
+	val dp2 = p2.toDevicePt
+	<line x1={dp1.x.toString} x2={dp2.x.toString} y1={dp1.y.toString} y2={dp2.y.toString}
+		 style="stroke: black; stroke-width: 1px;"></line>.convert
+}
+
+
 /** Generates an SVG map visualization according to the provided data. */
-def generate_visualization(indata : Seq[DataCenter]) : Array[Byte] = {
+def generate_visualization(dcdata : Seq[DataCenter], lineData : Seq[Line]) : Array[Byte] = {
 	val overlay = <g>
-		{indata map (dc ⇒ U(draw_datacenter(dc)))}
+		{lineData map (line ⇒ U(draw_line(line)))}
+		{dcdata map (dc ⇒ U(draw_datacenter(dc)))}
 	</g>.convert
 	
 	// Append to the svg document as child

@@ -39,5 +39,12 @@ case class DataCenter(coords : WorldPt, stats : Seq[DataCenterState])
 */
 case class DataCenterState(sector_stats : Seq[Double])
 
+/**
+Describes a connection between two location. */
+case class Line(p1 : WorldPt, p2 : WorldPt, stats : Seq[LineState])
 
+/**
+Describe a line's states, including the various statistics for it over time.
+*/
+case class LineState(line_stat : Double)
 }
