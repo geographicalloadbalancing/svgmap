@@ -98,7 +98,7 @@ def draw_line(line : Line) : Group[Node] = {
 
 /** Generates an SVG map visualization according to the provided data. */
 def generate_visualization(dcdata : Seq[DataCenter], lineData : Seq[Line]) : Array[Byte] = {
-	val overlay = <g>
+	val overlay = <g id="overlay">
 		{lineData map (line ⇒ U(draw_line(line)))}
 		{dcdata map (dc ⇒ U(draw_datacenter(dc)))}
 	</g>.convert
