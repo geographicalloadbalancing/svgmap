@@ -66,7 +66,7 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 				/* close with line */ " Z"
 			)
 			// Animate. We use <animateTransform> to scale the sector according to the corresponding value.
-			<path d={path} style={"fill: " + COLORS(s) + "; stroke: black; stroke-width: 1px"}>
+			<path d={path} style={"fill: " + COLORS(s) + "; stroke: black; stroke-width: 1px; vector-effect: non-scaling-stroke;"}>
 				<animateTransform
 					attributeName="transform" attributeType="XML"
 					type="scale" calcMode={CALC_MODE}
