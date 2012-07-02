@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="com.codecommit:anti-xml_2.9.1:0.4-SNAPSHOT" type="repository">
+    <properties maven-id="com.codecommit:anti-xml_2.9.1:0.4-SNAPSHOT" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/anti-xml_2.9.1-0.4-SNAPSHOT.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/scala-library-2.9.1.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/lib/anti-xml_2.9.1-0.4-SNAPSHOT-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES />
+  </library>
+</component>
