@@ -14,23 +14,16 @@ import java.io.InputStreamReader
 import scala.collection.JavaConverters._
 
 /** A simple test program that generates a map using some data. */
-object Main extends App {
+object Main {def main(args : Array[String]) = {
 	
-	
-	private val dcs : Seq[DataCenter] = {
+	val dcs : Seq[DataCenter] = {
 		/** From geo_capacity.m */
 		val datacenter_location : Seq[WorldPt] = List(WorldPt(37, -120), WorldPt(47, -120), WorldPt(44, -120), WorldPt(40, -90), WorldPt(31, -83), WorldPt(38, -78), WorldPt(31, -99), WorldPt(28, -81), WorldPt(35, -79), WorldPt(33, -81))
 		
 		// Raw traces
-		/* Doesn't work (seems to be a compiler bug
 		val (solar, wind) = {
 			def read_file(fname : String) = new opencsv.CSVReader(new InputStreamReader(new compress.compressors.CompressorStreamFactory createCompressorInputStream (ClassLoader getSystemResourceAsStream ("edu/caltech/glb/svgmap/indata/" + fname)))).readAll.asScala
 			("solar_supply_week.csv.bz2", "wind_supply_week.csv.bz2") map read_file
-		}
-		*/
-		val (solar, wind) = {
-			def read_file(fname : String) = new opencsv.CSVReader(new InputStreamReader(new compress.compressors.CompressorStreamFactory createCompressorInputStream (ClassLoader getSystemResourceAsStream ("edu/caltech/glb/svgmap/indata/" + fname)))).readAll.asScala
-			(read_file("solar_supply_week.csv.bz2"), read_file("wind_supply_week.csv.bz2"))
 		}
 		
 		datacenter_location.zipWithIndex map {case (dc_loc, dc) ⇒ {
@@ -52,8 +45,8 @@ object Main extends App {
 		def randLine = LineState(math.random)
 		(GenSeq fill 20)(randLine).seq
 	}
-	private val lines = List(
+	val lines = List(
 		Line(WorldPt(40, -90), WorldPt(35, -100), randomLineStat)
 	)
 	System.out write generate_visualization(dcs, lines)
-}
+}}
