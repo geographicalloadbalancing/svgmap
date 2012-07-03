@@ -7,7 +7,7 @@ class svgmap_types {
 
 // This is cool
 /** Enables mapping over 2-tuples. */
-// http://stackoverflow.com/questions/11198074/build-xml-literal-containing-anti-xml-object/11198223#11198223
+// http://stackoverflow.com/a/4022510/319931
 implicit def t2mapper[X, X0 <: X, X1 <: X](t: (X0, X1)) = new {
 	def map[R](f: X => R) = (f(t._1), f(t._2))
 }
