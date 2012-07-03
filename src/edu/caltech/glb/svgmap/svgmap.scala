@@ -35,8 +35,8 @@ object Main {def main(args : Array[String]) = {
 				raw zip raw flatMap {case (x, y) ⇒ List(x, y) }
 			}
 			DataCenter(dc_loc, solar_for_dc zip wind_for_dc map {case (s, w) ⇒
-				// scale input data
-				DataCenterState(List(-0.1 * s.toDouble, 0.1 * w.toDouble, 0))
+				// scale input data (ranges: solar ∈ [-17.13, 721.47], wind ∈ [0, 774.9])
+				DataCenterState(List(0.0014 * s.toDouble, 0.0014 * w.toDouble, 0))
 			})
 		}}
 	}
