@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Generate output SVG" type="Application" factoryName="Application">
-    <output_file path="$PROJECT_DIR$/out/out.svg" is_save="true" />
+    <output_file path="$PROJECT_DIR$/out/production/svgmap/edu/caltech/glb/svgmap/out.svg" is_save="true" />
     <option name="MAIN_CLASS_NAME" value="edu.caltech.glb.svgmap.Main" />
     <option name="VM_PARAMETERS" value="-Xss32M" />
     <option name="PROGRAM_PARAMETERS" value="" />

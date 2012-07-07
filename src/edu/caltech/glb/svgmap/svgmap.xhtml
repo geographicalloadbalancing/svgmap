@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Data center visualization</title>
+	<style type="text/css">
+		body {
+			font-family: "DejaVu Sans", sans-serif;
+			font-size: 9pt;
+		}
+	</style>
+	<script type="text/javascript">
+		/** Gets the svgmap DOM object. */
+		function svgmap() {
+			return document.getElementById('svgmap').contentDocument.rootElement;
+		}
+		/** Toggles whether the animation is running, and updates the play/pause button's label. */
+		function toggle_paused() {
+			var pause_btn = document.getElementById('pause_btn');
+			if(svgmap().animationsPaused()) {
+				svgmap().unpauseAnimations();
+				pause_btn.innerHTML = "Pause";
+			} else {
+				svgmap().pauseAnimations();
+				pause_btn.innerHTML = "Play";
+			}
+		}
+		
+		/** Updates the position of the slider according to the animation's current position. */
+		var seeker_updater = setInterval(function() {
+			var seeker = document.getElementById('seeker');
+			var cur_time = svgmap().getCurrentTime();
+			seeker.value = cur_time;
+			update_seeker_indicator(cur_time.toFixed(2));
+		}, 50 /*ms*/);
+		function update_seeker_indicator(f ) {
+			document.getElementById('seeker_indicator').innerHTML = f;
+		}
+		
+		// Start animation paused @@@@HACK
+		window.onload = toggle_paused;
+	</script>
+</head>
+<body>
+	<header>
+		<h1>Data center visualization</h1>
+	</header>
+	<object id="svgmap" data="out.svg" width="100%"/>
+	<nav id="controls">
+		<button id="pause_btn"
+			onclick="toggle_paused()"
+			style="width: 4em;"
+			autofocus="autofocus" accesskey="p">Play/pause
+		</button>
+		<input id="seeker"
+			type="range" min="0.0" max="123.0" value="0.0"
+			style="
+				width: -moz-calc(100% - 13em);
+				width: -webkit-calc(100% - 13em);  
+				width: calc(100% - 13em);
+			"
+			onchange="update_seeker_indicator(this.value);"
+		/>
+		<label for="seeker" style="display: inline-block; width: 5em">
+			<span id="seeker_indicator">0.0</span>
+			hrs.
+		</label>
+	</nav>
+</body>
+</html>
