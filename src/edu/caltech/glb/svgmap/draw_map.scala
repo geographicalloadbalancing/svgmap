@@ -110,8 +110,25 @@ def generate_visualization(dcdata : Seq[DataCenter], lineData : Seq[Line]) : Arr
 		{dcdata map (dc ⇒ U(draw_datacenter(dc)))}
 	</g>.convert
 	
+	/** Javascript message handlers (play, pause, etc.). A wrapper web page can then post messages to the SVG document. */
+	val script : Elem = <script type="text/javascript">
+		window.addEventListener("message", function(event) {{
+			if(event.data == "play")
+				document.documentElement.unpauseAnimations();
+			else if(event.data == "pause")
+				document.documentElement.pauseAnimations();
+			else if()
+				...
+		window.addEventListener("pause", function(event) {{
+			document.documentElement.pauseAnimations();
+		}}, false);
+		window.addEventListener("play", function(event) {{
+			document.documentElement.unpauseAnimations();
+		}}, false);
+	</script>.convert
+	
 	// Append to the svg document as child
-	val doc = BACKGROUND_MAP.copy(children = BACKGROUND_MAP.children :+ overlay)
+	val doc = BACKGROUND_MAP.copy(children = script +: BACKGROUND_MAP.children :+ overlay )
 	
 	val os = new java.io.ByteArrayOutputStream
 	XMLSerializer(outputDeclaration = true).serializeDocument(doc, os)
