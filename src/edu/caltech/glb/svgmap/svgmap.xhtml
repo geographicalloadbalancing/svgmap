@@ -12,7 +12,7 @@
 	<script type="text/javascript">
 		/** Gets the svgmap DOM object. */
 		function svgmap() {
-			return document.getElementById('svgmap').contentDocument.rootElement;
+			return document.getElementById('svgmap').contentDocument.documentElement;
 		}
 		/** Toggles whether the animation is running, and updates the play/pause button's label. */
 		function toggle_paused() {
