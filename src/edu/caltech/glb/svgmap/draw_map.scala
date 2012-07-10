@@ -92,7 +92,7 @@ def draw_line(line : Line) : Group[Node] = {
 	val dp1 = p1.toDevicePt
 	val dp2 = p2.toDevicePt
 	<line x1={"%.1f" format dp1.x} x2={"%.1f" format dp2.x} y1={"%.1f" format dp1.y} y2={"%.1f" format dp2.y}
-		 style="stroke: black; stroke-width: 1px;">
+		 style="stroke: black; stroke-width: 3px;">
 		<animate
 			attributeName="opacity"
 			calcMode={CALC_MODE}

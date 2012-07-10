@@ -78,7 +78,7 @@ object Main {def main(args : Array[String]) = {
 				//throw new Exception(arr.length + "")
 				arr
 			}
-			Line(client_loc, dc_loc, line_data map {_/1e4} map LineState)
+			Line(client_loc, dc_loc, line_data map {_/6.2525e4} map LineState)
 		}}
 	}
 	System.out write generate_visualization(dcs, lines)
