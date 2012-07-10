@@ -21,7 +21,7 @@ val BACKGROUND_MAP : Elem = {
 }
 
 /** The total time the animation should run, if there are <var>n</var> time steps to display. */
-private def animation_duration(n : Int) : String = (0.5 * n) + "s"
+private def animation_duration(n : Int) : String = "%.1fs" format (0.5 * n)
 
 /** Method to use for animation. (For example, "linear" ⇒ smoothly interpolate between data points; "discrete" ⇒ jump) */
 val CALC_MODE = "linear"
@@ -50,7 +50,7 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	val sector_g = <g>{
 		val NUM_SECTORS = sector_stats(0).length
 		// Evenly distributed around the color wheel
-		val COLORS = 0 until NUM_SECTORS map (360.0 / NUM_SECTORS * _) map ("hsla(" + _ + ", 100%, 70%, 0.7)")
+		val COLORS = 0 until NUM_SECTORS map (360.0 / NUM_SECTORS * _) map ("hsla(%.4f, 100%%, 70%%, 0.7)" format _)
 		0 until NUM_SECTORS map { s ⇒ {
 			/** Radius of a full sector (for value = 1.0) */
 			val r = 30
@@ -63,8 +63,8 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 			// Defines outline of sector
 			val path : String = (
 				/* center */ "M 0,0" +
-				/* draw line */ " L " + start_x + "," + start_y +
-				/* draw arc */ " A " + r + "," + r + " 0 0 1 " + end_x + "," + end_y +
+				/* draw line */ " L " + ("%.4f" format start_x) + "," + ("%.4f" format start_y) +
+				/* draw arc */ " A " + r + "," + r + " 0 0 1 " + ("%.4f" format end_x) + "," + ("%.4f" format end_y) +
 				/* close with line */ " Z"
 			)
 			// Animate. We use <animateTransform> to scale the sector according to the corresponding value.
@@ -72,7 +72,7 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 				<animateTransform
 					attributeName="transform" attributeType="XML"
 					type="scale" calcMode={CALC_MODE}
-					values={sector_stats map (_(s)) mkString ";"}
+					values={sector_stats map {"%.2f" format _(s)} mkString ";"}
 					dur={animation_duration(stats.length)} fill="freeze"
 				/>
 			</path>
@@ -80,7 +80,7 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	}</g>.convert
 	
 	// Translate everything to the desired data center location
-	<g transform={"translate(" + x + "," + y + ")"}>
+	<g transform={"translate(" + ("%.1f" format x) + "," + ("%.1f" format y) + ")"}>
 		{U(dot)}{U(label)}{U(sector_g)}
 	</g>.convert
 }
@@ -91,12 +91,12 @@ def draw_line(line : Line) : Group[Node] = {
 	val Line(p1, p2, stat) = line
 	val dp1 = p1.toDevicePt
 	val dp2 = p2.toDevicePt
-	<line x1={dp1.x.toString} x2={dp2.x.toString} y1={dp1.y.toString} y2={dp2.y.toString}
+	<line x1={"%.1f" format dp1.x} x2={"%.1f" format dp2.x} y1={"%.1f" format dp1.y} y2={"%.1f" format dp2.y}
 		 style="stroke: black; stroke-width: 1px;">
 		<animate
-			attributeName="stroke-width"
+			attributeName="opacity"
 			calcMode={CALC_MODE}
-			values={stat map (_.line_stat) mkString ";"}
+			values={stat map {"%.2f" format _.line_stat} mkString ";"}
 			dur={animation_duration(stat.length)} fill="freeze"
 		/>
 	</line>.convert

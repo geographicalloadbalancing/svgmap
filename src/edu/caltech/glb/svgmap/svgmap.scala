@@ -11,11 +11,17 @@ import scala.collection.GenSeq
 import org.apache.commons.compress
 import au.com.bytecode.opencsv
 import java.io.InputStreamReader
+import java.io
 import scala.collection.JavaConverters._
+import ucar.nc2
 
 /** A simple test program that generates a map using some data. */
 object Main {def main(args : Array[String]) = {
-	
+	val routing : nc2.Variable = {
+		val infile : io.InputStream = ClassLoader getSystemResourceAsStream ("edu/caltech/glb/svgmap/indata/routing.nc")
+		nc2.NetcdfFile.openInMemory("routing.nc", com.google.common.io.ByteStreams toByteArray infile) findVariable "routingPlan"
+	}
+
 	val dcs : Seq[DataCenter] = {
 		/** From geo_capacity.m */
 		val datacenter_location : Seq[WorldPt] = List(
@@ -61,8 +67,20 @@ object Main {def main(args : Array[String]) = {
 		(GenSeq fill 20)(randLine).seq
 	}
 	// Draw 1 line for each (client, dc) pair
-	val lines = dcs flatMap {case DataCenter(dc_loc, _) ⇒
-		client_locs map (client_loc ⇒ Line(client_loc, dc_loc, randomLineStat))
+	val lines = dcs.zipWithIndex flatMap {case (DataCenter(dc_loc, _), dc) ⇒
+		client_locs.zipWithIndex map {case (client_loc, client) ⇒ {
+			val line_data = {
+				val buf = routing.read(client + "," + dc + ", :").getDataAsByteBuffer.asDoubleBuffer
+				// convert to Java array
+				buf.clear
+				val arr = new Array[Double](buf.capacity)
+				buf.get(arr, 0, arr.length)
+				//throw new Exception(arr.length + "")
+				arr
+			}
+			Line(client_loc, dc_loc, line_data map {_/1e4} map LineState)
+		}}
 	}
 	System.out write generate_visualization(dcs, lines)
+
 }}
