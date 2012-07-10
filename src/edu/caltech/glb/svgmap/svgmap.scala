@@ -47,7 +47,9 @@ object Main {def main(args : Array[String]) = {
 			}
 			DataCenter(dc_loc, solar_for_dc zip wind_for_dc map {case (s, w) ⇒
 				// scale input data (ranges: solar ∈ [-17.13, 721.47], wind ∈ [0, 774.9])
-				DataCenterState(List(0.0014 * s.toDouble, 0.0014 * w.toDouble, 0))
+				// sqrt so that the value is proportional to the area.
+				// Clamp negative values to 0.
+				DataCenterState(List(math.sqrt(0.0014 * (s.toDouble max 0)), math.sqrt(0.0014 * w.toDouble), 0))
 			})
 		}}
 	}
