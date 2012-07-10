@@ -14,27 +14,61 @@
 		function svgmap() {
 			return document.getElementById('svgmap').contentDocument.documentElement;
 		}
-		/** Toggles whether the animation is running, and updates the play/pause button's label. */
-		function toggle_paused() {
-			var pause_btn = document.getElementById('pause_btn');
-			if(svgmap().animationsPaused()) {
-				svgmap().unpauseAnimations();
-				pause_btn.innerHTML = "Pause";
-			} else {
-				svgmap().pauseAnimations();
-				pause_btn.innerHTML = "Play";
-			}
-		}
 		
 		/** Updates the position of the slider according to the animation's current position. */
-		var seeker_updater = setInterval(function() {
+		function update_seeker() {
 			var seeker = document.getElementById('seeker');
 			var cur_time = svgmap().getCurrentTime();
 			seeker.value = cur_time;
 			update_seeker_indicator(cur_time.toFixed(2));
-		}, 50 /*ms*/);
+		}
+		var seeker_updater = undefined;
+		
+		/** Whether the animation is currently set to paused (as opposed to just being temporarily paused while user drags the slider). */
+		var underlying_is_playing = true;	// Browser starts playing automatically
+		/** Toggles whether the animation is set to running, and updates the play/pause button's label. */
+		function toggle_paused() {
+			underlying_is_playing = !underlying_is_playing;
+			set_playing(underlying_is_playing);
+			if(!underlying_is_playing)
+				update_seeker();	// Display the final value when pausing
+			// Update label according to setting
+			document.getElementById('pause_btn').innerHTML =
+				underlying_is_playing ? "Pause" : "Play";
+		}
+		/**
+		Sets whether the animation is playing as opposed to paused.
+		@param play specify true to start playing, false to pause
+		*/
+		function set_playing(play) {
+			if(play) {
+				seeker_updater = setInterval(update_seeker, 50 /*ms*/);	// resume seeker updating
+				svgmap().unpauseAnimations();
+			} else {
+				svgmap().pauseAnimations();
+				// Pause updating of seeker, freezing on the current time of the animation while paused
+				if(seeker_updater != undefined) {
+					clearInterval(seeker_updater);
+					seeker_updater = undefined;
+				}
+			}
+		}
+		
+		/** Pauses updating of the seeker while the user is dragging the slider. */
+		function pause_while_dragging() {
+			set_playing(false);
+		}
+		function resume_after_dragging() {
+			set_playing(underlying_is_playing);
+		}
+		/** Updates the textual display of the exact time. */
 		function update_seeker_indicator(f ) {
 			document.getElementById('seeker_indicator').innerHTML = f;
+		}
+		
+		/** Sets the animation's current position. */
+		function seek(new_time) {
+			svgmap().setCurrentTime(new_time);
 		}
 		
 		// Start animation paused @@@@HACK
@@ -59,7 +93,9 @@
 				width: -webkit-calc(100% - 13em);  
 				width: calc(100% - 13em);
 			"
-			onchange="update_seeker_indicator(this.value);"
+			onchange="update_seeker_indicator(this.value); seek(this.value);"
+			onmousedown="pause_while_dragging();"
+			onmouseup="resume_after_dragging();"
 		/>
 		<label for="seeker" style="display: inline-block; width: 5em">
 			<span id="seeker_indicator">0.0</span>
