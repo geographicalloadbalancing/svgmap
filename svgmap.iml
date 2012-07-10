@@ -21,6 +21,8 @@
     <orderEntry type="library" name="org.apache.commons:commons-compress:1.4.1" level="project" />
     <orderEntry type="library" name="com.codecommit:anti-xml_2.9.1:0.4-SNAPSHOT" level="project" />
     <orderEntry type="library" name="net.sf.opencsv:opencsv:2.3" level="project" />
+    <orderEntry type="library" name="edu.ucar:netcdf:4.2" level="project" />
+    <orderEntry type="library" name="edu.ucar:netcdf:4.21" level="project" />
   </component>
 </module>
 

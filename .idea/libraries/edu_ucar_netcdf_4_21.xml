@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="edu.ucar:netcdf:4.21" type="repository">
+    <properties maven-id="edu.ucar:netcdf:4.2" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/netcdf-4.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/slf4j-api-1.5.6.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/lib/netcdf-4.2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES />
+  </library>
+</component>
