@@ -18,23 +18,46 @@
 		function toggle_paused() {
 			var pause_btn = document.getElementById('pause_btn');
 			if(svgmap().animationsPaused()) {
+				resume_seeker_updating();
 				svgmap().unpauseAnimations();
 				pause_btn.innerHTML = "Pause";
 			} else {
 				svgmap().pauseAnimations();
+				pause_seeker_updating();
 				pause_btn.innerHTML = "Play";
 			}
 		}
 		
 		/** Updates the position of the slider according to the animation's current position. */
-		var seeker_updater = setInterval(function() {
+		function update_seeker() {
 			var seeker = document.getElementById('seeker');
 			var cur_time = svgmap().getCurrentTime();
 			seeker.value = cur_time;
 			update_seeker_indicator(cur_time.toFixed(2));
-		}, 50 /*ms*/);
+		}
+		var seeker_updater = undefined;
+		/**
+		Pauses updating of the seeker with the current time of the animation.
+		Used when the animation is paused, and while user is dragging the slider.
+		*/
+		function pause_seeker_updating() {
+			if(seeker_updater != undefined) {
+				clearInterval(seeker_updater);
+				seeker_updater = undefined;
+			}
+			update_seeker();	// Display the final value, before pausing
+		}
+		function resume_seeker_updating() {
+			seeker_updater = setInterval(update_seeker, 50 /*ms*/);
+		}
+		/** Updates the textual display of the exact time. */
 		function update_seeker_indicator(f ) {
 			document.getElementById('seeker_indicator').innerHTML = f;
+		}
+		
+		/** Sets the animation's current position. */
+		function seek(new_time) {
+			svgmap().setCurrentTime(new_time);
 		}
 		
 		// Start animation paused @@@@HACK
@@ -59,7 +82,9 @@
 				width: -webkit-calc(100% - 13em);  
 				width: calc(100% - 13em);
 			"
-			onchange="update_seeker_indicator(this.value);"
+			onchange="update_seeker_indicator(this.value); seek(this.value);"
+			onmousedown="pause_seeker_updating();"
+			onmouseup="if(!svgmap().animationsPaused()) resume_seeker_updating();"
 		/>
 		<label for="seeker" style="display: inline-block; width: 5em">
 			<span id="seeker_indicator">0.0</span>
