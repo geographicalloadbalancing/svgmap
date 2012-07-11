@@ -51,10 +51,9 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 		val NUM_SECTORS = sector_stats(0).length
 		// Evenly distributed around the color wheel
 		val COLORS = 0 until NUM_SECTORS map (360.0 / NUM_SECTORS * _) map ("hsla(%.4f, 100%%, 70%%, 0.7)" format _)
-		0 until NUM_SECTORS map { s ⇒ {
-			/** Radius of a full sector (for value = 1.0) */
-			val r = 30
-			
+		/** Radius of a full sector (for value = 1.0) */
+		val r = 30
+		val sectors = 0 until NUM_SECTORS map { s ⇒ {
 			// Calculate sector's endpoints
 			val (start_angle, end_angle) = (s, s + 1) map (_ * 2 * math.Pi / NUM_SECTORS)
 			val (start_x, end_x) = (start_angle, end_angle ) map (+r * math.sin(_))
@@ -77,6 +76,11 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 				/>
 			</path>
 		}}
+		val bounding_circle = <circle
+			cx="0" cy="0" r={r.toString}
+			style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
+		/>
+		sectors :+ bounding_circle
 	}</g>.convert
 	
 	// Translate everything to the desired data center location
