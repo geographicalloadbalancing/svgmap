@@ -26,6 +26,15 @@ private def animation_duration(n : Int) : String = "%.1fs" format (0.5 * n)
 /** Method to use for animation. (For example, "linear" ⇒ smoothly interpolate between data points; "discrete" ⇒ jump) */
 val CALC_MODE = "linear"
 
+/**
+Draws a small dot indicating the exact location of some object.
+@param coords the coordinates of the dot to draw
+*/
+def draw_dot(coords : WorldPt) : Elem = {
+	val DevicePt(x, y) = coords.toDevicePt
+	<circle cx={"%.4f" format x} cy={"%.4f" format y} r="2" style="fill:rgb(0,0,0)" />.convert
+}
+
 /** Draws an animated data center indicator at the specified coordinates, displaying the given stats over time.
 @return an SVG fragment to be inserted into the SVG document. */
 def draw_datacenter(dc : DataCenter) : Group[Node] = {
@@ -33,9 +42,6 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	val DevicePt(x, y) = coords.toDevicePt
 	
 	// The various parts of the data center indicator are specified relative to (0, 0); they are then translated to the appropriate spot.
-	
-	// Dot indicating the exact location of the data center
-	val dot = <circle cx="0" cy="0" r="2" style="fill:rgb(0,0,0)" />.convert
 	
 	// Draw the sector chart, indicating some data center statistics.
 	/*val sector_stats = stats map (_ match {
@@ -80,25 +86,30 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	
 	// Translate everything to the desired data center location
 	<g transform={"translate(" + ("%.1f" format x) + "," + ("%.1f" format y) + ")"}>
-		{U(dot)}{U(sector_g)}
+		{U(sector_g)}
 	</g>.convert
 }
 
-/** Draws an animated line, displaying the given stats over time.
+/**
+Draws an animated line, displaying the given stats over time.
+The <em>start</em> of the line will be indicated with a dot.
 @return an SVG fragment to be inserted into the SVG document. */
 def draw_line(line : Line) : Group[Node] = {
 	val Line(p1, p2, stat) = line
 	val dp1 = p1.toDevicePt
 	val dp2 = p2.toDevicePt
-	<line x1={"%.1f" format dp1.x} x2={"%.1f" format dp2.x} y1={"%.1f" format dp1.y} y2={"%.1f" format dp2.y}
-		 style="stroke: black; stroke-width: 3px;">
-		<animate
-			attributeName="opacity"
-			calcMode={CALC_MODE}
-			values={stat map {"%.2f" format _.line_stat} mkString ";"}
-			dur={animation_duration(stat.length)} fill="freeze"
-		/>
-	</line>.convert
+	<g>
+		{U(draw_dot(p1))}
+		<line x1={"%.1f" format dp1.x} x2={"%.1f" format dp2.x} y1={"%.1f" format dp1.y} y2={"%.1f" format dp2.y}
+			 style="stroke: black; stroke-width: 3px;">
+			<animate
+				attributeName="opacity"
+				calcMode={CALC_MODE}
+				values={stat map {"%.2f" format _.line_stat} mkString ";"}
+				dur={animation_duration(stat.length)} fill="freeze"
+			/>
+		</line>
+	</g>.convert
 }
 
 
