@@ -38,9 +38,10 @@ Describes a data center, and encapsulates various statistics for it over time.
 case class DataCenter(coords : WorldPt, stats : Seq[DataCenterState])
 
 /** Represents the current state of a particular data center. Each statistic should be in [0, 1].
-@param sector_stats a list of the statistics to be drawn in the sector chart
+@param demand the data center's current energy demand
+@param supplies a list of the amounts of energy from various source types (e.g. solar, wind, grid) that are available now
 */
-case class DataCenterState(sector_stats : Seq[Double])
+case class DataCenterState(demand : Double, supplies : Seq[Double])
 
 /**
 Describes a connection between two location. */
