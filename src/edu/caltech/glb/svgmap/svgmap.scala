@@ -77,6 +77,11 @@ object Main {def main(args : Array[String]) = {
 			val infile : io.InputStream = ClassLoader getSystemResourceAsStream("edu/caltech/glb/svgmap/indata/routing.nc")
 			nc2.NetcdfFile.openInMemory("routing.nc", com.google.common.io.ByteStreams toByteArray infile) findVariable "load"
 		}
+		// The normalized version of load. For line width change purpose.
+		val load_normalized : nc2.Variable = {
+			val infile : io.InputStream = ClassLoader getSystemResourceAsStream("edu/caltech/glb/svgmap/indata/routing.nc")
+			nc2.NetcdfFile.openInMemory("routing.nc", com.google.common.io.ByteStreams toByteArray infile) findVariable "load_normalized"
+		}
 		dcs.zipWithIndex flatMap {case (DataCenter(dc_loc, _), dc) ⇒
 			client_locs.zipWithIndex map {case (client_loc, client) ⇒ {
 				// extract a vector section from a multidimensional netCDF array
@@ -91,8 +96,14 @@ object Main {def main(args : Array[String]) = {
 				}
 				val line_data = extractData(client + "," + dc + ", :", routing)
 				val load_data = extractData(": ," + client, load)
+				val load_data_normalized = extractData(": ," + client, load_normalized)
 				// load_data is longer; discard the rest
-				Line(client_loc, dc_loc, line_data zip load_data map {case (line, load) ⇒ line / load} map LineState)
+				// the line opacity is the fraction of the total load of a population center
+				// i.e. lambda_{ij}/lambda{j}
+				val line_opacity = line_data zip load_data map {case (line, load) ⇒ line / load} map LineState
+				// the line width is 6 * sqrt(load of a population center)
+				val line_width = load_data_normalized map math.sqrt map {_*6} map LineState
+				Line(client_loc, dc_loc, line_opacity, line_width)
 			}}
 		}
 	}

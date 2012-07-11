@@ -95,18 +95,24 @@ Draws an animated line, displaying the given stats over time.
 The <em>start</em> of the line will be indicated with a dot.
 @return an SVG fragment to be inserted into the SVG document. */
 def draw_line(line : Line) : Group[Node] = {
-	val Line(p1, p2, stat) = line
+	val Line(p1, p2, opacity_stat, width_stat) = line
 	val dp1 = p1.toDevicePt
 	val dp2 = p2.toDevicePt
 	<g>
 		{U(draw_dot(p1))}
 		<line x1={"%.1f" format dp1.x} x2={"%.1f" format dp2.x} y1={"%.1f" format dp1.y} y2={"%.1f" format dp2.y}
-			 style="stroke: hsl(0, 0%, 50%); stroke-width: 3px;">
+			 style="stroke: hsl(0, 0%, 50%); stroke-width: 10px;">
 			<animate
 				attributeName="opacity"
 				calcMode={CALC_MODE}
-				values={stat map {"%.2f" format _.line_stat} mkString ";"}
-				dur={animation_duration(stat.length)} fill="freeze"
+				values={opacity_stat map {"%.2f" format _.line_stat} mkString ";"}
+				dur={animation_duration(opacity_stat.length)} fill="freeze"
+			/>
+			<animate
+				attributeName="stroke-width"
+				calcMode={CALC_MODE}
+			     values={width_stat map {"%.4f" format _.line_stat} mkString ";"}
+			     dur={animation_duration(width_stat.length)} fill="freeze"
 			/>
 		</line>
 	</g>.convert
