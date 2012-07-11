@@ -37,11 +37,6 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	// Dot indicating the exact location of the data center
 	val dot = <circle cx="0" cy="0" r="2" style="fill:rgb(0,0,0)" />.convert
 	
-	// Example animation based on http://www.w3.org/TR/2011/REC-SVG11-20110816/animate.html#AnimationElementsExample
-	val label = <text x="15" y="0">
-		I'm a data center!
-	</text>.convert
-	
 	// Draw the sector chart, indicating some data center statistics.
 	/*val sector_stats = stats map (_ match {
 		case DataCenterState(a, b, c) ⇒ List(a, b, c)
@@ -85,7 +80,7 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	
 	// Translate everything to the desired data center location
 	<g transform={"translate(" + ("%.1f" format x) + "," + ("%.1f" format y) + ")"}>
-		{U(dot)}{U(label)}{U(sector_g)}
+		{U(dot)}{U(sector_g)}
 	</g>.convert
 }
 
