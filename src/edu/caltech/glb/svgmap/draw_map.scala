@@ -86,13 +86,13 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 					dur={animation_duration(stats.length)} fill="freeze"
 				/>.convert
 		}
-		// Animates the shape, rotating by the specified angle.
+		// Animates the shape, rotating by the specified angle in degrees.
 		implicit def animate_rotate_conv(shape : Elem) = new {
-			def animate_rotations(angles : Seq[Double]) : Elem =
+			def animate_rotations(angles_deg : Seq[Double]) : Elem =
 				shape addChild <animateTransform
 					attributeName="transform" attributeType="XML"
 					type="rotate" calcMode={CALC_MODE}
-					values={angles map {"%.2f" format _} mkString ";"}
+					values={angles_deg map {"%.2f" format _} mkString ";"}
 					dur={animation_duration(stats.length)} fill="freeze"
 					/>.convert
 		}
@@ -113,8 +113,8 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 				val supply_fracs = supply_sector_stats map (_(s) / supply_totals(s))
 				val unrotated_sector = draw_sector(start_angle, end_angle, SUPPLY_COLORS(s))
 				// Animate rotating sector to correct position
-				// At time t, rotate by the sum of values for sectors (0 until s)
-				unrotated_sector animate_rotations (supply_fracs map (_ * math.Pi))
+				// At time t, rotate by the sum of values for sectors (0 until s). (SVG uses degrees)
+				unrotated_sector animate_rotations (supply_fracs map (_ * 180.0))
 			}})
 			// Clip so that only right side is visible @@@@@@ TODO 
 			val supply_sector_g = <g>{supply_sectors map U}</g>.convert
