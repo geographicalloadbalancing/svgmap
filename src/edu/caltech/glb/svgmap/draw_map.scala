@@ -48,10 +48,10 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 		case DataCenterState(a, b, c) ⇒ List(a, b, c)
 	})*/
 	val supply_sector_stats = stats map (_.supplies)
-	val sector_g = <g>{
+	val sector_g = <g style="opacity: 0.7;">{
 		val NUM_SUPPLY_SECTORS = supply_sector_stats(0).length
 		// Evenly distributed around the color wheel
-		val SUPPLY_COLORS = 0 until NUM_SUPPLY_SECTORS map (360.0 / NUM_SUPPLY_SECTORS * _) map ("hsla(%.4f, 100%%, 70%%, 0.7)" format _)
+		val SUPPLY_COLORS = 0 until NUM_SUPPLY_SECTORS map (360.0 / NUM_SUPPLY_SECTORS * _) map ("hsl(%.4f, 100%%, 70%%)" format _)
 		/** Radius of a full sector (for value = 1.0) */
 		val r = 30
 		
