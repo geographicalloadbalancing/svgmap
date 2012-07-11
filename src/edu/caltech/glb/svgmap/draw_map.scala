@@ -58,14 +58,15 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 		// Draws a single static sector of the sector chart
 		def draw_sector(start_angle : Double, end_angle : Double, color : String) = {
 			// Calculate sector's endpoints
-			val (start_x, end_x) = (start_angle, end_angle) map (+r * math.sin(_))
-			val (start_y, end_y) = (start_angle, end_angle) map (-r * math.cos(_))
+			val (start_x, end_x) = (start_angle, end_angle) map (+r * math.cos(_))
+			val (start_y, end_y) = (start_angle, end_angle) map (-r * math.sin(_))
 			
 			// Defines outline of sector
 			val path : String = (
 				/* center */ "M 0,0" +
 				/* draw line */ " L " + ("%.4f" format start_x) + "," + ("%.4f" format start_y) +
-				/* draw arc */ " A " + r + "," + r + " 0 0 1 " + ("%.4f" format end_x) + "," + ("%.4f" format end_y) +
+				// Set sweep-flag to 0 (to draw the arc in the standard direction)
+				/* draw arc */ " A " + r + "," + r + " 0 0 0 " + ("%.4f" format end_x) + "," + ("%.4f" format end_y) +
 				/* close with line */ " Z"
 			)
 			
@@ -114,9 +115,9 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 				val unrotated_sector = draw_sector(start_angle, end_angle, SUPPLY_COLORS(s))
 				// Animate rotating sector to correct position
 				// At time t, rotate by the sum of values for sectors (0 until s). (SVG uses degrees)
-				unrotated_sector animate_rotations (supply_fracs map (_ * 180.0))
+				unrotated_sector animate_rotations (supply_fracs map (-_ * 180.0))
 			}})
-			// Clip so that only right side is visible @@@@@@ TODO 
+			// Clip so that only right side is visible @@@ TODO 
 			val supply_sector_g = <g>{supply_sectors map U}</g>.convert
 			// Scale the sectors as a group
 			supply_sector_g animate_radius supply_totals
