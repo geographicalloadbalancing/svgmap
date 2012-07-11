@@ -17,10 +17,7 @@ import ucar.nc2
 
 /** A simple test program that generates a map using some data. */
 object Main {def main(args : Array[String]) = {
-	val routing : nc2.Variable = {
-		val infile : io.InputStream = ClassLoader getSystemResourceAsStream ("edu/caltech/glb/svgmap/indata/routing.nc")
-		nc2.NetcdfFile.openInMemory("routing.nc", com.google.common.io.ByteStreams toByteArray infile) findVariable "routingPlan"
-	}
+
 
 	val dcs : Seq[DataCenter] = {
 		/** From geo_capacity.m */
@@ -68,20 +65,36 @@ object Main {def main(args : Array[String]) = {
 		def randLine = LineState(math.random)
 		(GenSeq fill 20)(randLine).seq
 	}
+
 	// Draw 1 line for each (client, dc) pair
-	val lines = dcs.zipWithIndex flatMap {case (DataCenter(dc_loc, _), dc) ⇒
-		client_locs.zipWithIndex map {case (client_loc, client) ⇒ {
-			val line_data = {
-				val buf = routing.read(client + "," + dc + ", :").getDataAsByteBuffer.asDoubleBuffer
-				// convert to Java array
-				buf.clear
-				val arr = new Array[Double](buf.capacity)
-				buf.get(arr, 0, arr.length)
-				//throw new Exception(arr.length + "")
-				arr
-			}
-			Line(client_loc, dc_loc, line_data map {_/6.2525e4} map LineState)
-		}}
+	val lines = {
+		val routing : nc2.Variable = {
+			val infile : io.InputStream = ClassLoader getSystemResourceAsStream ("edu/caltech/glb/svgmap/indata/routing.nc")
+			nc2.NetcdfFile.openInMemory("routing.nc", com.google.common.io.ByteStreams toByteArray infile) findVariable "routingPlan"
+		}
+		// Population center requests load over time. 48 by 1008
+		val load : nc2.Variable = {
+			val infile : io.InputStream = ClassLoader getSystemResourceAsStream("edu/caltech/glb/svgmap/indata/routing.nc")
+			nc2.NetcdfFile.openInMemory("routing.nc", com.google.common.io.ByteStreams toByteArray infile) findVariable "load"
+		}
+		dcs.zipWithIndex flatMap {case (DataCenter(dc_loc, _), dc) ⇒
+			client_locs.zipWithIndex map {case (client_loc, client) ⇒ {
+				// extract a vector section from a multidimensional netCDF array
+				// section is the position of the vector to extract
+				// inputMatrix is the variable name in the netCDF
+				def extractData(section : String, inputMatrix : nc2.Variable) : Seq[Double] = {
+					val buf = inputMatrix.read(section).getDataAsByteBuffer.asDoubleBuffer()
+					buf.clear
+					var arr = new Array[Double](buf.capacity)
+					buf.get(arr, 0, arr.length)
+					arr
+				}
+				val line_data = extractData(client + "," + dc + ", :", routing)
+				val load_data = extractData(": ," + client, load)
+				// load_data is longer; discard the rest
+				Line(client_loc, dc_loc, line_data zip load_data map {case (line, load) ⇒ line / load} map LineState)
+			}}
+		}
 	}
 	System.out write generate_visualization(dcs, lines)
 

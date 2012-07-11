@@ -101,7 +101,7 @@ def draw_line(line : Line) : Group[Node] = {
 	<g>
 		{U(draw_dot(p1))}
 		<line x1={"%.1f" format dp1.x} x2={"%.1f" format dp2.x} y1={"%.1f" format dp1.y} y2={"%.1f" format dp2.y}
-			 style="stroke: black; stroke-width: 3px;">
+			 style="stroke: hsl(0, 0%, 50%); stroke-width: 3px;">
 			<animate
 				attributeName="opacity"
 				calcMode={CALC_MODE}
