@@ -5,7 +5,7 @@ with some changes, mainly to reduce file size.
 
 Wikipedia specifies how to map (lat, long) coordinates onto this image: http://en.wikipedia.org/wiki/Template:Location_map_USA2
 -->
-<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" version="1.1" width="1181" height="731">
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMinYMin meet" viewBox="0 0 1181 731">
 <metadata id="metadata12636">
 	<rdf:RDF>
 		<cc:Work rdf:about="">
