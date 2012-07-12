@@ -43,10 +43,16 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	
 	// The various parts of the data center indicator are specified relative to (0, 0); they are then translated to the appropriate spot.
 	
-	// Draw the sector chart, indicating some data center statistics.
-	/*val sector_stats = stats map (_ match {
-		case DataCenterState(a, b, c) ⇒ List(a, b, c)
-	})*/
+	/*
+	Draw the sector chart, indicating some data center statistics.
+	
+	The current design is a “supply‒demand” sector chart.
+	The chart is split into demand (left) and supply (right) semicircles.
+	The left half is a single large sector whose area represents the DC's gross electricity demand given its current load.
+	The right half's overall area represents the amount of energy the DC is currently producing or buying from the grid.
+	It is split into multiple sectors of varying angular widths, proportional the energy from various sources (wind power available, solar available, purchased from grid).
+	Hence the area of each sector represents the amount of electricity consumed or produced from each source.
+	*/
 	val supply_sector_stats = stats map (_.supplies)
 	val sector_g = <g style="opacity: 0.7;">{
 		val NUM_SUPPLY_SECTORS = supply_sector_stats(0).length
