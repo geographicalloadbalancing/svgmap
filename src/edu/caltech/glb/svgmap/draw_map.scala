@@ -56,7 +56,7 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 		val r = 30
 		
 		// Draws a single static sector of the sector chart
-		def draw_sector(start_angle : Double, end_angle : Double, color : String) = {
+		def draw_sector(start_angle : Double, end_angle : Double, color : String) : Elem = {
 			// Calculate sector's endpoints
 			val (start_x, end_x) = (start_angle, end_angle) map (+r * math.cos(_))
 			val (start_y, end_y) = (start_angle, end_angle) map (-r * math.sin(_))
@@ -119,8 +119,12 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 				val θs : Seq[Double] = supply_fracs map (_.slice(0, s).sum)
 				unrotated_sector animate_rotations (θs map (-_ * 180.0/* svg uses degrees */))
 			}})
-			// Clip so that only right side is visible @@@ TODO 
-			val supply_sector_g = <g>{supply_sectors map U}</g>.convert
+			// Clip so that only right side is visible.
+			// Then draw a stroke around the entire semicircle (to create the boundary on the clipped sides).
+			val supply_sector_g = <g>
+				<g clip-path="url(#dcSectorChartSupplySideClip)">{supply_sectors map U}</g>
+				{U(draw_sector(-0.5 * math.Pi, 0.5 * math.Pi, "transparent"))}
+			</g>.convert
 			// Scale the sectors as a group
 			supply_sector_g animate_radius supply_totals
 		}
