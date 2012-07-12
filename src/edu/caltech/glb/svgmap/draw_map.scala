@@ -43,45 +43,106 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	
 	// The various parts of the data center indicator are specified relative to (0, 0); they are then translated to the appropriate spot.
 	
-	// Draw the sector chart, indicating some data center statistics.
-	/*val sector_stats = stats map (_ match {
-		case DataCenterState(a, b, c) ⇒ List(a, b, c)
-	})*/
-	val sector_stats = stats map (_.sector_stats)
-	val sector_g = <g>{
-		val NUM_SECTORS = sector_stats(0).length
+	/*
+	Draw the sector chart, indicating some data center statistics.
+	
+	The current design is a “supply‒demand” sector chart.
+	The chart is split into demand (left) and supply (right) semicircles.
+	The left half is a single large sector whose area represents the DC's gross electricity demand given its current load.
+	The right half's overall area represents the amount of energy the DC is currently producing or buying from the grid.
+	It is split into multiple sectors of varying angular widths, proportional the energy from various sources (wind power available, solar available, purchased from grid).
+	Hence the area of each sector represents the amount of electricity consumed or produced from each source.
+	*/
+	val supply_sector_stats = stats map (_.supplies)
+	val sector_g = <g style="opacity: 0.7;">{
+		val NUM_SUPPLY_SECTORS = supply_sector_stats(0).length
 		// Evenly distributed around the color wheel
-		val COLORS = 0 until NUM_SECTORS map (360.0 / NUM_SECTORS * _) map ("hsla(%.4f, 100%%, 70%%, 0.7)" format _)
+		val SUPPLY_COLORS = 0 until NUM_SUPPLY_SECTORS map (360.0 / NUM_SUPPLY_SECTORS * _) map ("hsl(%.4f, 100%%, 70%%)" format _)
 		/** Radius of a full sector (for value = 1.0) */
 		val r = 30
-		val sectors = 0 until NUM_SECTORS map { s ⇒ {
+		
+		// Draws a single static sector of the sector chart
+		def draw_sector(start_angle : Double, end_angle : Double, color : String) : Elem = {
 			// Calculate sector's endpoints
-			val (start_angle, end_angle) = (s, s + 1) map (_ * 2 * math.Pi / NUM_SECTORS)
-			val (start_x, end_x) = (start_angle, end_angle ) map (+r * math.sin(_))
-			val (start_y, end_y) = (start_angle, end_angle ) map (-r * math.cos(_))
+			val (start_x, end_x) = (start_angle, end_angle) map (+r * math.cos(_))
+			val (start_y, end_y) = (start_angle, end_angle) map (-r * math.sin(_))
 			
 			// Defines outline of sector
 			val path : String = (
 				/* center */ "M 0,0" +
 				/* draw line */ " L " + ("%.4f" format start_x) + "," + ("%.4f" format start_y) +
-				/* draw arc */ " A " + r + "," + r + " 0 0 1 " + ("%.4f" format end_x) + "," + ("%.4f" format end_y) +
+				// Set sweep-flag to 0 (to draw the arc in the standard direction)
+				/* draw arc */ " A " + r + "," + r + " 0 0 0 " + ("%.4f" format end_x) + "," + ("%.4f" format end_y) +
 				/* close with line */ " Z"
 			)
-			// Animate. We use <animateTransform> to scale the sector according to the corresponding value.
-			<path d={path} style={"fill: " + COLORS(s) + "; stroke: black; stroke-width: 1px; vector-effect: non-scaling-stroke;"}>
-				<animateTransform
+			
+			<path
+				d={path}
+				style={"fill: " + color + "; stroke: black; stroke-width: 1px; vector-effect: non-scaling-stroke;"}
+			/>.convert
+		}
+		// Animates the shape in radius so that the sector will have area proportional to areas.
+		// We use <animateTransform> to scale the sector according to the corresponding value.
+		// sqrt so that the area is proportional to the value
+		implicit def animate_radius_conv(shape : Elem) = new {
+			def animate_radius(areas : Seq[Double]) : Elem =
+				shape addChild <animateTransform
 					attributeName="transform" attributeType="XML"
 					type="scale" calcMode={CALC_MODE}
-					values={sector_stats map {"%.2f" format _(s)} mkString ";"}
+					values={areas map {"%.2f" format math.sqrt(_)} mkString ";"}
 					dur={animation_duration(stats.length)} fill="freeze"
-				/>
-			</path>
-		}}
+				/>.convert
+		}
+		// Animates the shape, rotating by the specified angle in degrees.
+		implicit def animate_rotate_conv(shape : Elem) = new {
+			def animate_rotations(angles_deg : Seq[Double]) : Elem =
+				shape addChild <animateTransform
+					attributeName="transform" attributeType="XML"
+					type="rotate" calcMode={CALC_MODE}
+					values={angles_deg map {"%.2f" format _} mkString ";"}
+					dur={animation_duration(stats.length)} fill="freeze"
+					/>.convert
+		}
+		
+		val demand_side : Elem = draw_sector(0.5 * math.Pi, 1.5 * math.Pi, "yellow") animate_radius
+			(stats map (_.demand))
+		
+		val supply_side : Elem = {
+			val supply_totals = supply_sector_stats map (_.sum)
+			/** Fraction of available energy each sector represents */
+			val supply_fracs = supply_sector_stats zip supply_totals map {case (sstats, total) ⇒ sstats map (_ / total)}
+			val supply_sectors = (0 until NUM_SUPPLY_SECTORS map { s ⇒ {
+				/*
+				Conceptually, what we want to do here is an angular scaling on the sector.
+				But SVG only supports <em>affine</em> transformations.
+				As a workaround, we draw each sector on the full right side of the pie,
+				and <em>rotate</em> it the appropriate angle to expose the desired angle.
+				Then use clipping so that only the real chart (right half) displays.
+				*/
+				// Each one starts as a semicircle on the right side
+				val (start_angle, end_angle) : (Double, Double) = (-0.5, 0.5) map (_ * math.Pi )
+				
+				val unrotated_sector = draw_sector(start_angle, end_angle, SUPPLY_COLORS(s))
+				// Animate rotating sector to correct position
+				// At each point in time, rotate by the sum of values for sectors (0 until s)
+				val θs : Seq[Double] = supply_fracs map (_.slice(0, s).sum)
+				unrotated_sector animate_rotations (θs map (-_ * 180.0/* svg uses degrees */))
+			}})
+			// Clip so that only right side is visible.
+			// Then draw a stroke around the entire semicircle (to create the boundary on the clipped sides).
+			val supply_sector_g = <g>
+				<g clip-path="url(#dcSectorChartSupplySideClip)">{supply_sectors map U}</g>
+				{U(draw_sector(-0.5 * math.Pi, 0.5 * math.Pi, "transparent"))}
+			</g>.convert
+			// Scale the sectors as a group
+			supply_sector_g animate_radius supply_totals
+		}
+		
 		val bounding_circle = <circle
 			cx="0" cy="0" r={r.toString}
 			style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
 		/>
-		sectors :+ bounding_circle
+		List(U(demand_side), U(supply_side), bounding_circle)
 	}</g>.convert
 	
 	// Translate everything to the desired data center location
