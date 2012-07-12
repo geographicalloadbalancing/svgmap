@@ -98,6 +98,9 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 					/>.convert
 		}
 		
+		val demand_side : Elem = draw_sector(0.5 * math.Pi, 1.5 * math.Pi, "yellow") animate_radius
+			(stats map (_.demand))
+		
 		val supply_side : Elem = {
 			val supply_totals = supply_sector_stats map (_.sum)
 			/** Fraction of available energy each sector represents */
@@ -133,7 +136,7 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 			cx="0" cy="0" r={r.toString}
 			style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
 		/>
-		List(U(supply_side), bounding_circle)
+		List(U(demand_side), U(supply_side), bounding_circle)
 	}</g>.convert
 	
 	// Translate everything to the desired data center location
