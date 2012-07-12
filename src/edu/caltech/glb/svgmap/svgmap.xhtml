@@ -89,15 +89,15 @@
 		<input id="seeker"
 			type="range" min="0.0" max="123.0" value="0.0"
 			style="
-				width: -moz-calc(100% - 13em);
-				width: -webkit-calc(100% - 13em);  
-				width: calc(100% - 13em);
+				width: -moz-calc(100% - 15em);
+				width: -webkit-calc(100% - 15em);  
+				width: calc(100% - 15em);
 			"
 			onchange="update_seeker_indicator(this.value); seek(this.value);"
 			onmousedown="pause_while_dragging();"
 			onmouseup="resume_after_dragging();"
 		/>
-		<label for="seeker" style="display: inline-block; width: 5em">
+		<label for="seeker" style="display: inline-block; width: 7em">
 			<span id="seeker_indicator">0.0</span>
 			hrs.
 		</label>
