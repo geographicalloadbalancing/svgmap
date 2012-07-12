@@ -11,6 +11,9 @@ class svgmap_types {
 implicit def t2mapper[X, X0 <: X, X1 <: X](t: (X0, X1)) = new {
 	def map[R](f: X => R) = (f(t._1), f(t._2))
 }
+implicit def t3mapper[X, X0 <: X, X1 <: X, X2 <: X](t: (X0, X1, X2)) = new {
+	def map[R](f: X => R) = (f(t._1), f(t._2), f(t._3))
+}
 
 private val IMAGE_WIDTH = 1181
 private val IMAGE_HEIGHT = 731
