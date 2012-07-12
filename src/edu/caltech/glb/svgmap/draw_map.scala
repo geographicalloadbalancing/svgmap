@@ -121,7 +121,7 @@ def generate_visualization(dcdata : Seq[DataCenter], lineData : Seq[Line]) : Arr
 	</g>.convert
 	
 	// Append to the svg document as child
-	val doc = BACKGROUND_MAP.copy(children = BACKGROUND_MAP.children :+ overlay)
+	val doc = BACKGROUND_MAP addChild overlay
 	
 	val os = new java.io.ByteArrayOutputStream
 	XMLSerializer(outputDeclaration = true).serializeDocument(doc, os)
