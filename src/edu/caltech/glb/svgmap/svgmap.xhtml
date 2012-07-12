@@ -8,8 +8,11 @@
 			font-family: "DejaVu Sans", sans-serif;
 			font-size: 9pt;
 		}
+		.accel {
+			text-decoration: underline;
+		}
 	</style>
-	<script type="text/javascript">
+	<script type="text/javascript"><![CDATA[
 		/** Gets the svgmap DOM object. */
 		function svgmap() {
 			return document.getElementById('svgmap').contentDocument.documentElement;
@@ -34,7 +37,7 @@
 				update_seeker();	// Display the final value when pausing
 			// Update label according to setting
 			document.getElementById('pause_btn').innerHTML =
-				underlying_is_playing ? "Pause" : "Play";
+				underlying_is_playing ? '<span class="accel">P</span>ause' : '<span class="accel">P</span>lay';
 		}
 		/**
 		Sets whether the animation is playing as opposed to paused.
@@ -73,7 +76,7 @@
 		
 		// Start animation paused @@@@HACK
 		window.onload = toggle_paused;
-	</script>
+	]]></script>
 </head>
 <body>
 	<header>
