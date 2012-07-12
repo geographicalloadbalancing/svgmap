@@ -74,14 +74,15 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 				style={"fill: " + color + "; stroke: black; stroke-width: 1px; vector-effect: non-scaling-stroke;"}
 			/>.convert
 		}
-		// Animates the shape in radius according to radii (for a sector).
+		// Animates the shape in radius so that the sector will have area proportional to areas.
 		// We use <animateTransform> to scale the sector according to the corresponding value.
+		// sqrt so that the area is proportional to the value
 		implicit def animate_radius_conv(shape : Elem) = new {
-			def animate_radius(radii : Seq[Double]) : Elem =
+			def animate_radius(areas : Seq[Double]) : Elem =
 				shape addChild <animateTransform
 					attributeName="transform" attributeType="XML"
 					type="scale" calcMode={CALC_MODE}
-					values={radii map {"%.2f" format _} mkString ";"}
+					values={areas map {"%.2f" format math.sqrt(_)} mkString ";"}
 					dur={animation_duration(stats.length)} fill="freeze"
 				/>.convert
 		}

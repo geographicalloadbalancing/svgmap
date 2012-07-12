@@ -49,7 +49,12 @@ object Main {def main(args : Array[String]) = {
 				// scale input data (ranges: solar ∈ [-17.13, 721.47], wind ∈ [0, 774.9])
 				// sqrt so that the value is proportional to the area.
 				// Clamp negative values to 0.
-				DataCenterState(0.5, List(math.sqrt(0.0014 * (s.toDouble max 0)), math.sqrt(0.0014 * w.toDouble), 0.12))
+				DataCenterState(
+					/* demand */ /*@@@dummy*/0.5, List(
+						/* solar */ 0.0014 * (s.toDouble max 0),
+						/* wind */ 0.0014 * (w.toDouble max 0),
+						/* brown */ /*@@@dummy@*/0.12
+				))
 			})
 		}}
 	}
