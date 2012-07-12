@@ -100,6 +100,8 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 		
 		val supply_side : Elem = {
 			val supply_totals = supply_sector_stats map (_.sum)
+			/** Fraction of available energy each sector represents */
+			val supply_fracs = supply_sector_stats zip supply_totals map {case (sstats, total) ⇒ sstats map (_ / total)}
 			val supply_sectors = (0 until NUM_SUPPLY_SECTORS map { s ⇒ {
 				/*
 				Conceptually, what we want to do here is an angular scaling on the sector.
@@ -110,12 +112,12 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 				*/
 				// Each one starts as a semicircle on the right side
 				val (start_angle, end_angle) : (Double, Double) = (-0.5, 0.5) map (_ * math.Pi )
-				/** Fraction of available energy this sector represents */
-				val supply_fracs = supply_sector_stats map (_(s) / supply_totals(s))
+				
 				val unrotated_sector = draw_sector(start_angle, end_angle, SUPPLY_COLORS(s))
 				// Animate rotating sector to correct position
-				// At time t, rotate by the sum of values for sectors (0 until s). (SVG uses degrees)
-				unrotated_sector animate_rotations (supply_fracs map (-_ * 180.0))
+				// At each point in time, rotate by the sum of values for sectors (0 until s)
+				val θs : Seq[Double] = supply_fracs map (_.slice(0, s).sum)
+				unrotated_sector animate_rotations (θs map (-_ * 180.0/* svg uses degrees */))
 			}})
 			// Clip so that only right side is visible @@@ TODO 
 			val supply_sector_g = <g>{supply_sectors map U}</g>.convert
