@@ -18,12 +18,22 @@
 			return document.getElementById('svgmap').contentDocument.documentElement;
 		}
 		
+		// Read time info from the map's metadata
+		var timing_elem = document.getElementById('svgmap').contentDocument.getElementById('timing');
+		var num_steps = +timing_elem.getAttribute('numSteps');
+		// world_time_per_step / anim_time_per_step 
+		var timelapse_factor = +timing_elem.getAttribute('timelapseFactor');
+		var duration = +timing_elem.getAttribute('duration');
+		// Set properties of the seeker
+		var seeker = document.getElementById('seeker');
+		seeker.max = duration;
+		seeker.step = duration / num_steps;
+		
 		/** Updates the position of the slider according to the animation's current position. */
 		function update_seeker() {
-			var seeker = document.getElementById('seeker');
 			var cur_time = svgmap().getCurrentTime();
 			seeker.value = cur_time;
-			update_seeker_indicator(cur_time.toFixed(2));
+			update_seeker_indicator(cur_time);
 		}
 		var seeker_updater = undefined;
 		
@@ -66,7 +76,7 @@
 		}
 		/** Updates the textual display of the exact time. */
 		function update_seeker_indicator(f ) {
-			document.getElementById('seeker_indicator').innerHTML = f;
+			document.getElementById('seeker_indicator').innerHTML = (f * timelapse_factor).toFixed(2);
 		}
 		
 		/** Sets the animation's current position. */
