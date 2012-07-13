@@ -20,8 +20,14 @@ val BACKGROUND_MAP : Elem = {
 	XML fromInputStream (ClassLoader getSystemResourceAsStream "edu/caltech/glb/svgmap/base_map.svg")
 }
 
-/** The total time the animation should run, if there are <var>n</var> time steps to display. */
-private def animation_duration(n : Int) : String = "%.1fs" format (0.5 * n)
+// Animated and real-world time per step of the animation, in s 
+private val anim_time_per_step : Double = 0.5 /*s*/
+private val world_time_per_step : Double= 5 /*min*/ * 60 /*s / min*/
+/**
+The total time the animation should run, if there are <var>n</var> time steps to display.
+ @return the total time, as a string that can be inserted into the SVG
+*/
+private def animation_duration(n : Int) : String = "%.4fs" format (anim_time_per_step * n)
 
 /** Method to use for animation. (For example, "linear" ⇒ smoothly interpolate between data points; "discrete" ⇒ jump) */
 val CALC_MODE = "linear"
@@ -182,6 +188,22 @@ def draw_line(line : Line) : Group[Node] = {
 
 /** Generates an SVG map visualization according to the provided data. */
 def generate_visualization(dcdata : Seq[DataCenter], lineData : Seq[Line]) : Array[Byte] = {
+	// Add the speed and the time as metadata, for use by the XHTML wrapper
+	val num_steps = {
+		if(dcdata.length != lineData.length)
+			System.err println "Warning: data-center and line data are of different lengths; using the shorter"
+		dcdata.length min lineData.length
+	}
+	val timelapse_factor = world_time_per_step / anim_time_per_step 
+	val timing_metadata : Elem = <timing xmlns="http://rsrg.cms.caltech.edu/xml/2012/timing"
+		numSteps={num_steps}
+		timelapseFactor={"%f" format timelapse_factor}
+		duration={animation_duration(num_steps)}
+	/>.convert
+	
+	val map_with_timing_metadata : Elem = (BACKGROUND_MAP \ "metadata" addChild timing_metadata).unselect
+	@@@@ TODO: write the xhtml javascript side
+	
 	val overlay = <g id="overlay">
 		{lineData map (line ⇒ U(draw_line(line)))}
 		{dcdata map (dc ⇒ U(draw_datacenter(dc)))}
