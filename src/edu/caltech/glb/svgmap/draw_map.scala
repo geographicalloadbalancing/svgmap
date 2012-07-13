@@ -40,7 +40,9 @@ def draw_dot(coords : WorldPt) : Elem = {
 def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	val DataCenter(coords, stats) = dc
 	val DevicePt(x, y) = coords.toDevicePt
-	
+	val maxDemand = 4.1335e+05
+     val ringSizeFactor = math.sqrt((stats map (_.demand)).max)
+
 	// The various parts of the data center indicator are specified relative to (0, 0); they are then translated to the appropriate spot.
 	
 	/*
@@ -134,12 +136,12 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 				<g clip-path="url(#dcSectorChartSupplySideClip)">{supply_sectors map U}</g>
 				{U(draw_sector(-0.5 * math.Pi, 0.5 * math.Pi, "transparent"))}
 			</g>.convert
-			// Scale the sectors as a group
+			// Scale the sectors as a group    
 			supply_sector_g animate_radius supply_totals
 		}
 		
 		val bounding_circle = <circle
-			cx="0" cy="0" r={r.toString}
+			cx="0" cy="0" r={(r * ringSizeFactor).toString}
 			style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
 		/>
 		List(U(demand_side), U(supply_side), bounding_circle)
