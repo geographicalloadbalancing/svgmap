@@ -13,25 +13,16 @@
 		}
 	</style>
 	<script type="text/javascript"><![CDATA[
-		/** Gets the svgmap DOM object. */
-		function svgmap() {
-			return document.getElementById('svgmap').contentDocument.documentElement;
-		}
-		
-		// Read time info from the map's metadata
-		var timing_elem = document.getElementById('svgmap').contentDocument.getElementById('timing');
-		var num_steps = +timing_elem.getAttribute('numSteps');
-		// world_time_per_step / anim_time_per_step 
-		var timelapse_factor = +timing_elem.getAttribute('timelapseFactor');
-		var duration = +timing_elem.getAttribute('duration');
-		// Set properties of the seeker
-		var seeker = document.getElementById('seeker');
-		seeker.max = duration;
-		seeker.step = duration / num_steps;
+		var svgmap;
+		var timing_elem;
+		var num_steps;
+		var timelapse_factor;
+		var duration;
+		var seeker;
 		
 		/** Updates the position of the slider according to the animation's current position. */
 		function update_seeker() {
-			var cur_time = svgmap().getCurrentTime();
+			var cur_time = svgmap.getCurrentTime();
 			seeker.value = cur_time;
 			update_seeker_indicator(cur_time);
 		}
@@ -56,9 +47,9 @@
 		function set_playing(play) {
 			if(play) {
 				seeker_updater = setInterval(update_seeker, 50 /*ms*/);	// resume seeker updating
-				svgmap().unpauseAnimations();
+				svgmap.unpauseAnimations();
 			} else {
-				svgmap().pauseAnimations();
+				svgmap.pauseAnimations();
 				// Pause updating of seeker, freezing on the current time of the animation while paused
 				if(seeker_updater != undefined) {
 					clearInterval(seeker_updater);
@@ -81,11 +72,28 @@
 		
 		/** Sets the animation's current position. */
 		function seek(new_time) {
-			svgmap().setCurrentTime(new_time);
+			svgmap.setCurrentTime(new_time);
 		}
 		
-		// Start animation paused @@@@HACK
-		window.onload = toggle_paused;
+		/** Stuff to execute as soon as all the DOM elements are finished loading */
+		window.onload = function init() {
+			/** The svgmap DOM object. */
+			svgmap = document.getElementById('svgmap').contentDocument.documentElement;
+			
+			// Read time info from the map's metadata
+			timing_elem = document.getElementById('svgmap').contentDocument.getElementById('timing');
+			num_steps = +timing_elem.getAttribute('numSteps');
+			// world_time_per_step / anim_time_per_step 
+			timelapse_factor = +timing_elem.getAttribute('timelapseFactor');
+			duration = +timing_elem.getAttribute('duration');
+			// Set properties of the seeker
+			seeker = document.getElementById('seeker');
+			seeker.max = duration;
+			seeker.step = duration / num_steps;	// Make each step of the slider match one step of the animation
+		
+			// Start animation paused @@@@HACK
+			toggle_paused();
+		};
 	]]></script>
 </head>
 <body>

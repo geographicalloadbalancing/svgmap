@@ -190,17 +190,19 @@ def draw_line(line : Line) : Group[Node] = {
 def generate_visualization(dcdata : Seq[DataCenter], lineData : Seq[Line]) : Array[Byte] = {
 	// Add the speed and the time as metadata, for use by the XHTML wrapper
 	val num_steps = {
+		// Lengths of all the elements of the animation
+		val lengths = (dcdata map  (_.stats.length)) ++ (lineData map (_.width_stats.length))
 		/** @@@TO-DO: uncomment again when the script for building outside the IDE is implemented
-		if(dcdata.length != lineData.length)
-			System.err println "Warning: data-center and line data are of different lengths; using the shorter"
+		if(lengths.min != lengths.max)
+			System.err println "Warning: different durations for different parts of the animation; using the shorter"
 		*/
-		dcdata.length min lineData.length
+		lengths.min
 	}
 	val timelapse_factor = world_time_per_step / anim_time_per_step 
 	val timing_metadata : Elem = <timing id="timing" xmlns="http://rsrg.cms.caltech.edu/xml/2012/timing"
 		numSteps={num_steps.toString}
 		timelapseFactor={"%f" format timelapse_factor}
-		duration={animation_duration(num_steps)}
+		duration={"%.4f" format (num_steps * anim_time_per_step)}
 	/>.convert
 	
 	val map_with_timing_metadata : Elem = {
