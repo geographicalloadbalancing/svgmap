@@ -67,7 +67,7 @@
 		}
 		/** Updates the textual display of the exact time. */
 		function update_seeker_indicator(f ) {
-			document.getElementById('seeker_indicator').innerHTML = (f * timelapse_factor).toFixed(2);
+			document.getElementById('seeker_indicator').innerHTML = (f * timelapse_factor / 3600.0).toFixed(2);
 		}
 		
 		/** Sets the animation's current position. */
