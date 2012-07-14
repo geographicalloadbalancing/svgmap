@@ -20,8 +20,14 @@ val BACKGROUND_MAP : Elem = {
 	XML fromInputStream (ClassLoader getSystemResourceAsStream "edu/caltech/glb/svgmap/base_map.svg")
 }
 
-/** The total time the animation should run, if there are <var>n</var> time steps to display. */
-private def animation_duration(n : Int) : String = "%.1fs" format (0.5 * n)
+// Animated and real-world time per step of the animation, in s 
+private val anim_time_per_step : Double = 0.5 /*s*/
+private val world_time_per_step : Double= 5 /*min*/ * 60 /*s / min*/
+/**
+The total time the animation should run, if there are <var>n</var> time steps to display.
+ @return the total time, as a string that can be inserted into the SVG
+*/
+private def animation_duration(n : Int) : String = "%.4fs" format (anim_time_per_step * n)
 
 /** Method to use for animation. (For example, "linear" ⇒ smoothly interpolate between data points; "discrete" ⇒ jump) */
 val CALC_MODE = "linear"
@@ -186,13 +192,37 @@ def draw_line(line : Line) : Group[Node] = {
 
 /** Generates an SVG map visualization according to the provided data. */
 def generate_visualization(dcdata : Seq[DataCenter], lineData : Seq[Line]) : Array[Byte] = {
+	// Add the speed and the time as metadata, for use by the XHTML wrapper
+	val num_steps = {
+		// Lengths of all the elements of the animation
+		val lengths = (dcdata map  (_.stats.length)) ++ (lineData map (_.width_stats.length))
+		/** @@@TO-DO: uncomment again when the script for building outside the IDE is implemented
+		if(lengths.min != lengths.max)
+			System.err println "Warning: different durations for different parts of the animation; using the shorter"
+		*/
+		lengths.min
+	}
+	val timelapse_factor = world_time_per_step / anim_time_per_step 
+	val timing_metadata : Elem = <timing id="timing" xmlns="http://rsrg.cms.caltech.edu/xml/2012/timing"
+		numSteps={num_steps.toString}
+		timelapseFactor={"%f" format timelapse_factor}
+		duration={"%.4f" format (num_steps * anim_time_per_step)}
+	/>.convert
+	
+	val map_with_timing_metadata : Elem = {
+		val metadata_elem_zipper : Zipper[Elem] = BACKGROUND_MAP \ "metadata"
+		val map_with_updated_metadata_elem = metadata_elem_zipper.updated(0, metadata_elem_zipper.head addChild timing_metadata).unselect apply 0
+		// Zipper.unselect has unnecessarily restrictive type. Work around by casting. (Cheat, but seems to work)
+		map_with_updated_metadata_elem.asInstanceOf[Elem]
+	}
+	
 	val overlay = <g id="overlay">
 		{lineData map (line ⇒ U(draw_line(line)))}
 		{dcdata map (dc ⇒ U(draw_datacenter(dc)))}
 	</g>.convert
 	
 	// Append to the svg document as child
-	val doc = BACKGROUND_MAP addChild overlay
+	val doc = map_with_timing_metadata addChild overlay
 	
 	val os = new java.io.ByteArrayOutputStream
 	XMLSerializer(outputDeclaration = true).serializeDocument(doc, os)
