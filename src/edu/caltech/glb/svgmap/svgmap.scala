@@ -73,7 +73,7 @@ object Main {def main(args : Array[String]) = {
 			nc2.NetcdfFile.openInMemory("routing.nc", com.google.common.io.ByteStreams toByteArray infile) findVariable "routingPlan"
 		}
 		// Population center requests load over time. 48 by 1008
-		val load : nc2.Variable = {
+		val load_raw : nc2.Variable = {
 			val infile : io.InputStream = ClassLoader getSystemResourceAsStream("edu/caltech/glb/svgmap/indata/routing.nc")
 			nc2.NetcdfFile.openInMemory("routing.nc", com.google.common.io.ByteStreams toByteArray infile) findVariable "load"
 		}
@@ -95,15 +95,14 @@ object Main {def main(args : Array[String]) = {
 					arr
 				}
 				val line_data = extractData(client + "," + dc + ", :", routing)
-				val load_data = extractData(": ," + client, load)
+				val load_data = extractData(": ," + client, load_raw)
 				val load_data_normalized = extractData(": ," + client, load_normalized)
 				// load_data is longer; discard the rest
 				// the line opacity is the fraction of the total load of a population center
 				// i.e. lambda_{ij}/lambda{j}
-				val line_opacity = line_data zip load_data map {case (line, load) ⇒ line / load} map LineState
-				// the line width is 6 * load of a population center
-				val line_width = load_data_normalized map {_*7} map LineState
-				Line(client_loc, dc_loc, line_opacity, line_width)
+				val line_opacity = line_data zip load_data map {case (line, load) ⇒ line / load}
+				val line_width = load_data_normalized map {_*7}
+				Line(client_loc, dc_loc, (line_opacity zip line_width) map {case (o, w) ⇒ LineState(o, w)})
 			}}
 		}
 	}

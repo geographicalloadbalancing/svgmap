@@ -163,7 +163,7 @@ Draws an animated line, displaying the given stats over time.
 The <em>start</em> of the line will be indicated with a dot.
 @return an SVG fragment to be inserted into the SVG document. */
 def draw_line(anim_time_per_step : Double, line : Line) : Group[Node] = {
-	val Line(p1, p2, opacity_stat, width_stat) = line
+	val Line(p1, p2, stats) = line
 	val dp1 = p1.toDevicePt
 	val dp2 = p2.toDevicePt
 	<g>
@@ -173,14 +173,14 @@ def draw_line(anim_time_per_step : Double, line : Line) : Group[Node] = {
 			<animate
 				attributeName="opacity"
 				calcMode={CALC_MODE}
-				values={opacity_stat map {"%.2f" format _.line_stat} mkString ";"}
-				dur={animation_duration(anim_time_per_step, opacity_stat.length)} fill="freeze"
+				values={stats map {"%.2f" format _.opacity} mkString ";"}
+				dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
 			/>
 			<animate
 				attributeName="stroke-width"
 				calcMode={CALC_MODE}
-				values={width_stat map {"%.4f" format _.line_stat} mkString ";"}
-				dur={animation_duration(anim_time_per_step, width_stat.length)} fill="freeze"
+				values={stats map {"%.4f" format _.width} mkString ";"}
+				dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
 			/>
 		</line>
 	</g>.convert
@@ -196,7 +196,7 @@ def generate_visualization(anim_time_per_step : Double, world_time_per_step : Do
 	// Add the speed and the time as metadata, for use by the XHTML wrapper
 	val num_steps = {
 		// Lengths of all the elements of the animation
-		val lengths = (dcdata map  (_.stats.length)) ++ (lineData map (_.width_stats.length))
+		val lengths = (dcdata map  (_.stats.length)) ++ (lineData map (_.stats.length))
 		/** @@@TO-DO: uncomment again when the script for building outside the IDE is implemented
 		if(lengths.min != lengths.max)
 			System.err println "Warning: different durations for different parts of the animation; using the shorter"
