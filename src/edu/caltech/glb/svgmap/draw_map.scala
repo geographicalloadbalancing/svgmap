@@ -40,9 +40,7 @@ def draw_dot(coords : WorldPt) : Elem = {
 def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	val DataCenter(coords, stats) = dc
 	val DevicePt(x, y) = coords.toDevicePt
-	val maxDemand = 4.1335e+05
-     val ringSizeFactor = math.sqrt((stats map (_.demand)).max)
-
+	
 	// The various parts of the data center indicator are specified relative to (0, 0); they are then translated to the appropriate spot.
 	
 	/*
@@ -54,6 +52,8 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 	The right half's overall area represents the amount of energy the DC is currently producing or buying from the grid.
 	It is split into multiple sectors of varying angular widths, proportional the energy from various sources (wind power available, solar available, purchased from grid).
 	Hence the area of each sector represents the amount of electricity consumed or produced from each source.
+	Each data center has a ring drawn around it. The size of the ring matches the maximum of the power demand (according to server load) at this data center.
+	Thus, when the supply side extends beyond the ring, it indicates that the DC is generating more power than the DC can use under full load (well technically, assuming that it reaches full utilization at some point during the animation).
 	*/
 	val supply_sector_stats = stats map (_.supplies)
 	val sector_g = <g style="opacity: 0.7;">{
@@ -140,6 +140,8 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 			supply_sector_g animate_radius supply_totals
 		}
 		
+		/** Relative radius of the ring according to the maximum energy demand of this DC. sqrt for equal area.*/
+		val ringSizeFactor = math.sqrt((stats map (_.demand)).max)
 		val bounding_circle = <circle
 			cx="0" cy="0" r={(r * ringSizeFactor).toString}
 			style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
@@ -174,8 +176,8 @@ def draw_line(line : Line) : Group[Node] = {
 			<animate
 				attributeName="stroke-width"
 				calcMode={CALC_MODE}
-			     values={width_stat map {"%.4f" format _.line_stat} mkString ";"}
-			     dur={animation_duration(width_stat.length)} fill="freeze"
+				values={width_stat map {"%.4f" format _.line_stat} mkString ";"}
+				dur={animation_duration(width_stat.length)} fill="freeze"
 			/>
 		</line>
 	</g>.convert
