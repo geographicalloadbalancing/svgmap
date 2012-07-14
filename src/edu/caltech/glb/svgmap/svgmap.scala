@@ -25,13 +25,14 @@ object Main {def main(args : Array[String]) = {
 			WorldPt(37, -120), WorldPt(47, -120), WorldPt(44, -120), WorldPt(40, -90), WorldPt(31, -83),
 			WorldPt(38, -78), WorldPt(31, -99), WorldPt(28, -81), WorldPt(35, -79), WorldPt(33, -81))
 		
-		// Raw traces
-		val (solar, wind) = {
+		// Read in the traces for solar, wind, and total power demand at each data center.
+		// The values are normalized so that they are each in the same units.
+		val (solar, wind, total) = {
 			def read_file(fname : String) = new opencsv.CSVReader(new InputStreamReader(
 				new compress.compressors.CompressorStreamFactory createCompressorInputStream
 					(ClassLoader getSystemResourceAsStream ("edu/caltech/glb/svgmap/indata/" + fname))
 			)).readAll.asScala
-			("solar_supply_week.csv.bz2", "wind_supply_week.csv.bz2") map read_file
+			("solar.csv.bz2", "wind.csv.bz2", "total.csv.bz2") map read_file
 		}
 		
 		datacenter_location.zipWithIndex map {case (dc_loc, dc) ⇒ {
@@ -42,17 +43,17 @@ object Main {def main(args : Array[String]) = {
 				// interleave with self
 				raw zip raw flatMap {case (x, y) ⇒ List(x, y) }
 			}
-			DataCenter(dc_loc, solar_for_dc zip wind_for_dc map {case (s, w) ⇒
-				// scale input data (ranges: solar ∈ [-17.13, 721.47], wind ∈ [0, 774.9])
-				// sqrt so that the value is proportional to the area.
+			val total_for_dc = total map (_(dc))
+			DataCenter(dc_loc, solar_for_dc zip wind_for_dc zip total_for_dc map {case ((s, w), t) ⇒ {
+				val max_demand = 4.1335e+05	// scale input data
 				// Clamp negative values to 0.
 				DataCenterState(
-					/* demand */ /*@@@dummy*/0.5, List(
-						/* solar */ 0.0014 * (s.toDouble max 0),
-						/* wind */ 0.0014 * (w.toDouble max 0),
-						/* brown */ /*@@@dummy@*/0.12
-				))
-			})
+					/* demand */ (t.toDouble max 0) / max_demand, List(
+						/* solar */  (s.toDouble max 0),
+						/* wind */  (w.toDouble max 0),
+						/* brown */ (t.toDouble - s.toDouble - w.toDouble) max 0
+				) map (_/max_demand))
+			}})
 		}}
 	}
 	
@@ -106,8 +107,8 @@ object Main {def main(args : Array[String]) = {
 				// the line opacity is the fraction of the total load of a population center
 				// i.e. lambda_{ij}/lambda{j}
 				val line_opacity = line_data zip load_data map {case (line, load) ⇒ line / load} map LineState
-				// the line width is 6 * sqrt(load of a population center)
-				val line_width = load_data_normalized map math.sqrt map {_*6} map LineState
+				// the line width is 6 * load of a population center
+				val line_width = load_data_normalized map {_*7} map LineState
 				Line(client_loc, dc_loc, line_opacity, line_width)
 			}}
 		}
