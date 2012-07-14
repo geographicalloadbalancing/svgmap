@@ -17,8 +17,6 @@ import ucar.nc2
 
 /** A simple test program that generates a map using some data. */
 object Main {def main(args : Array[String]) = {
-
-
 	val dcs : Seq[DataCenter] = {
 		/** From geo_capacity.m */
 		val datacenter_location : Seq[WorldPt] = List(
@@ -67,11 +65,7 @@ object Main {def main(args : Array[String]) = {
 		WorldPt(42, -71), WorldPt(32, -80), WorldPt(44, -100), WorldPt(35, -86), WorldPt(31, -99), WorldPt(40, -112),
 		WorldPt(44, -73), WorldPt(38, -79), WorldPt(47, -121), WorldPt(39, -81), WorldPt(44, -89), WorldPt(43, -107))
 	
-	def randomLineStat = {
-		def randLine = LineState(math.random)
-		(GenSeq fill 20)(randLine).seq
-	}
-
+	
 	// Draw 1 line for each (client, dc) pair
 	val lines = {
 		val routing : nc2.Variable = {
@@ -113,6 +107,9 @@ object Main {def main(args : Array[String]) = {
 			}}
 		}
 	}
-	System.out write generate_visualization(dcs, lines)
+	
+	val anim_time_per_step : Double = 0.5 /*s*/
+	val world_time_per_step : Double= 5 /*min*/ * 60 /*s / min*/
+	System.out write generate_visualization(anim_time_per_step, world_time_per_step, dcs, lines)
 
 }}

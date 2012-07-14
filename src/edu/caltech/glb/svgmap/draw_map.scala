@@ -20,14 +20,11 @@ val BACKGROUND_MAP : Elem = {
 	XML fromInputStream (ClassLoader getSystemResourceAsStream "edu/caltech/glb/svgmap/base_map.svg")
 }
 
-// Animated and real-world time per step of the animation, in s 
-private val anim_time_per_step : Double = 0.5 /*s*/
-private val world_time_per_step : Double= 5 /*min*/ * 60 /*s / min*/
 /**
 The total time the animation should run, if there are <var>n</var> time steps to display.
  @return the total time, as a string that can be inserted into the SVG
 */
-private def animation_duration(n : Int) : String = "%.4fs" format (anim_time_per_step * n)
+private def animation_duration(anim_time_per_step : Double, n : Int) : String = "%.4fs" format (anim_time_per_step * n)
 
 /** Method to use for animation. (For example, "linear" ⇒ smoothly interpolate between data points; "discrete" ⇒ jump) */
 val CALC_MODE = "linear"
@@ -43,7 +40,7 @@ def draw_dot(coords : WorldPt) : Elem = {
 
 /** Draws an animated data center indicator at the specified coordinates, displaying the given stats over time.
 @return an SVG fragment to be inserted into the SVG document. */
-def draw_datacenter(dc : DataCenter) : Group[Node] = {
+def draw_datacenter(anim_time_per_step : Double, dc : DataCenter) : Group[Node] = {
 	val DataCenter(coords, stats) = dc
 	val DevicePt(x, y) = coords.toDevicePt
 	
@@ -98,7 +95,7 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 					attributeName="transform" attributeType="XML"
 					type="scale" calcMode={CALC_MODE}
 					values={areas map {"%.2f" format math.sqrt(_)} mkString ";"}
-					dur={animation_duration(stats.length)} fill="freeze"
+					dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
 				/>.convert
 		}
 		// Animates the shape, rotating by the specified angle in degrees.
@@ -108,7 +105,7 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 					attributeName="transform" attributeType="XML"
 					type="rotate" calcMode={CALC_MODE}
 					values={angles_deg map {"%.2f" format _} mkString ";"}
-					dur={animation_duration(stats.length)} fill="freeze"
+					dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
 					/>.convert
 		}
 		
@@ -165,7 +162,7 @@ def draw_datacenter(dc : DataCenter) : Group[Node] = {
 Draws an animated line, displaying the given stats over time.
 The <em>start</em> of the line will be indicated with a dot.
 @return an SVG fragment to be inserted into the SVG document. */
-def draw_line(line : Line) : Group[Node] = {
+def draw_line(anim_time_per_step : Double, line : Line) : Group[Node] = {
 	val Line(p1, p2, opacity_stat, width_stat) = line
 	val dp1 = p1.toDevicePt
 	val dp2 = p2.toDevicePt
@@ -177,21 +174,25 @@ def draw_line(line : Line) : Group[Node] = {
 				attributeName="opacity"
 				calcMode={CALC_MODE}
 				values={opacity_stat map {"%.2f" format _.line_stat} mkString ";"}
-				dur={animation_duration(opacity_stat.length)} fill="freeze"
+				dur={animation_duration(anim_time_per_step, opacity_stat.length)} fill="freeze"
 			/>
 			<animate
 				attributeName="stroke-width"
 				calcMode={CALC_MODE}
 				values={width_stat map {"%.4f" format _.line_stat} mkString ";"}
-				dur={animation_duration(width_stat.length)} fill="freeze"
+				dur={animation_duration(anim_time_per_step, width_stat.length)} fill="freeze"
 			/>
 		</line>
 	</g>.convert
 }
 
 
-/** Generates an SVG map visualization according to the provided data. */
-def generate_visualization(dcdata : Seq[DataCenter], lineData : Seq[Line]) : Array[Byte] = {
+/**
+Generates an SVG map visualization according to the provided data.
+@param anim_time_per_step Animated time per step of the animation, in s
+@param world_time_per_step Real-world time per step of the animation, in s
+*/
+def generate_visualization(anim_time_per_step : Double, world_time_per_step : Double, dcdata : Seq[DataCenter], lineData : Seq[Line]) : Array[Byte] = {
 	// Add the speed and the time as metadata, for use by the XHTML wrapper
 	val num_steps = {
 		// Lengths of all the elements of the animation
@@ -217,8 +218,8 @@ def generate_visualization(dcdata : Seq[DataCenter], lineData : Seq[Line]) : Arr
 	}
 	
 	val overlay = <g id="overlay">
-		{lineData map (line ⇒ U(draw_line(line)))}
-		{dcdata map (dc ⇒ U(draw_datacenter(dc)))}
+		{lineData map (line ⇒ U(draw_line(anim_time_per_step, line)))}
+		{dcdata map (dc ⇒ U(draw_datacenter(anim_time_per_step, dc)))}
 	</g>.convert
 	
 	// Append to the svg document as child
