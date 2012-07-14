@@ -107,7 +107,7 @@ object Main {def main(args : Array[String]) = {
 		}
 	}
 	
-	val anim_time_per_step : Double = 0.5 /*s*/
+	val anim_time_per_step : Double = 0.2 /*s*/
 	val world_time_per_step : Double= 5 /*min*/ * 60 /*s / min*/
 	System.out write generate_visualization(anim_time_per_step, world_time_per_step, dcs, lines)
 
