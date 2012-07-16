@@ -17,22 +17,23 @@ import ucar.nc2
 
 /** A simple test program that generates a map using some data. */
 object Main {def main(args : Array[String]) = {
+	// Read in the position for data centers and population centers
+	// These values are in the latlng form. East and North semisphere are positive.
+	// Read in the traces for solar, wind, and total power demand at each data center.
+	// The values are normalized so that they are each in the same units.
+	val (dc_loc_raw, state_loc_raw, solar, wind, total) = {
+		def read_file(fname : String) = new opencsv.CSVReader(new InputStreamReader(
+			new compress.compressors.CompressorStreamFactory createCompressorInputStream
+			  (ClassLoader getSystemResourceAsStream ("edu/caltech/glb/svgmap/indata/" + fname))
+		)).readAll.asScala
+		("dc_loc.csv.bz2", "state_loc.csv.bz2", "solar.csv.bz2", "wind.csv.bz2", "total.csv.bz2") map read_file
+	}
+
 	val dcs : Seq[DataCenter] = {
-		/** From geo_capacity.m */
-		val datacenter_location : Seq[WorldPt] = List(
-			WorldPt(37, -120), WorldPt(47, -120), WorldPt(44, -120), WorldPt(40, -90), WorldPt(31, -83),
-			WorldPt(38, -78), WorldPt(31, -99), WorldPt(28, -81), WorldPt(35, -79), WorldPt(33, -81))
-		
-		// Read in the traces for solar, wind, and total power demand at each data center.
-		// The values are normalized so that they are each in the same units.
-		val (solar, wind, total) = {
-			def read_file(fname : String) = new opencsv.CSVReader(new InputStreamReader(
-				new compress.compressors.CompressorStreamFactory createCompressorInputStream
-					(ClassLoader getSystemResourceAsStream ("edu/caltech/glb/svgmap/indata/" + fname))
-			)).readAll.asScala
-			("solar.csv.bz2", "wind.csv.bz2", "total.csv.bz2") map read_file
-		}
-		
+		// Create the datacenter location list of WorldPt.
+		val datacenter_location = dc_loc_raw map {case Array(lat, lng) ⇒ WorldPt(lat.toDouble, lng.toDouble)}
+
+
 		datacenter_location.zipWithIndex map {case (dc_loc, dc) ⇒ {
 			val solar_for_dc = solar map (_(dc))
 			// There are 2 solar readings for each wind reading. For now, double each wind reading to match them:
@@ -55,18 +56,9 @@ object Main {def main(args : Array[String]) = {
 			}})
 		}}
 	}
-	
-	/** Also hard-coded for now. Values taken from <code>geo_capacity.m</code>. */
-	val client_locs : Seq[WorldPt] = List(WorldPt(32, -87), WorldPt(34, -119), WorldPt(35, -92), WorldPt(37, -120), WorldPt(39, -105), WorldPt(41, -73),
-		WorldPt(39, -76), WorldPt(28, -81), WorldPt(31, -83), WorldPt(44, -114), WorldPt(40, -89), WorldPt(40, -86),
-		WorldPt(41, -93), WorldPt(38, -98), WorldPt(38, -85), WorldPt(31, -92), WorldPt(45, -69), WorldPt(39, -77),
-		WorldPt(42, -72), WorldPt(43, -84), WorldPt(45, -93), WorldPt(33, -90), WorldPt(38, -92), WorldPt(47, -110),
-		WorldPt(41, -99), WorldPt(39, -116), WorldPt(43, -71), WorldPt(40, -74), WorldPt(34, -106), WorldPt(43, -76),
-		WorldPt(35, -79), WorldPt(47, -100), WorldPt(40, -83), WorldPt(35, -97), WorldPt(44, -120), WorldPt(41, -78),
-		WorldPt(42, -71), WorldPt(32, -80), WorldPt(44, -100), WorldPt(35, -86), WorldPt(31, -99), WorldPt(40, -112),
-		WorldPt(44, -73), WorldPt(38, -79), WorldPt(47, -121), WorldPt(39, -81), WorldPt(44, -89), WorldPt(43, -107))
-	
-	
+
+	// Create the population center location list of WorldPt
+	val client_locs = state_loc_raw map {case Array(lat, lng) ⇒ WorldPt(lat.toDouble, lng.toDouble)}
 	// Draw 1 line for each (client, dc) pair
 	val lines = {
 		val routing : nc2.Variable = {

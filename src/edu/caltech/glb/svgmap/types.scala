@@ -14,6 +14,12 @@ implicit def t2mapper[X, X0 <: X, X1 <: X](t: (X0, X1)) = new {
 implicit def t3mapper[X, X0 <: X, X1 <: X, X2 <: X](t: (X0, X1, X2)) = new {
 	def map[R](f: X => R) = (f(t._1), f(t._2), f(t._3))
 }
+implicit def t4mapper[X, X0 <: X, X1 <: X, X2 <:X, X3 <:X](t: (X0, X1, X2, X3)) = new {
+	def map[R](f: X => R) = (f(t._1), f(t._2), f(t._3), f(t._4))
+}
+implicit def t5mapper[X, X0 <: X, X1 <: X, X2 <:X, X3 <:X, X4 <:X](t: (X0, X1, X2, X3, X4)) = new {
+	def map[R](f: X => R) = (f(t._1), f(t._2), f(t._3), f(t._4), f(t._5))
+}
 implicit def t3asSeq[X, X0 <: X, X1 <: X, X2 <: X](t: (X0, X1, X2)) = new {
 	def asSeq : Seq[X] = List(t._1, t._2, t._3)
 }
