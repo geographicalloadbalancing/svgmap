@@ -51,6 +51,8 @@ type DataCenterState = DataCenterVals[Double]
 val DataCenterState = DataCenterVals[Double] _
 type DataCenterColors = DataCenterVals[String]
 val DataCenterColors = DataCenterVals[String] _
+type DataCenterLegendText = DataCenterVals[String]
+val DataCenterLegendText = DataCenterVals[String] _
 
 /**
 Describes a connection between two locations. */

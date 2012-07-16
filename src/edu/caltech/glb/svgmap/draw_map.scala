@@ -185,13 +185,38 @@ def draw_line(anim_time_per_step : Double, line : Line) : Group[Node] = {
 	</g>.convert
 }
 
+/**
+Draws a legend identifying the colors used.
+*/
+def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem = {
+	val stats : Seq[(String, String)] = (labels.demand +: labels.supplies.asSeq) zip (colors.demand +: colors.supplies.asSeq)
+	
+	<g id="legendWrap" clip-path="url(#legendClip)" transform="translate(700, 4)">
+		<rect id="legendRect"
+			x="0" y="0"
+			width="200" height={(4 + (16 + 4) * stats.length).toString}
+			style="fill: #e0fff0; stroke-width: 3px; stroke: #000050"
+		/>
+		<clipPath id="legendClip">
+			<use xlink:href="#legendRect"/>
+		</clipPath>
+		{stats.zipWithIndex map {case ((label, color), i) ⇒
+			val y : Int = 4 + (16 + 4) * i
+			<g transform={"translate(0, %d)" format y}>
+				<use xlink:href="#legendColorSquare" fill={color}/>
+				<text x="24" y="12" font-size="16px">{label}</text>
+			</g>
+		}}
+	</g>.convert
+}
+
 
 /**
 Generates an SVG map visualization according to the provided data.
 @param anim_time_per_step Animated time per step of the animation, in s
 @param world_time_per_step Real-world time per step of the animation, in s
 */
-def generate_visualization(anim_time_per_step : Double, world_time_per_step : Double, dccolors : DataCenterColors, dcdata : Seq[DataCenter], lineData : Seq[Line]) : Array[Byte] = {
+def generate_visualization(anim_time_per_step : Double, world_time_per_step : Double, dclegend : DataCenterLegendText, dccolors : DataCenterColors, dcdata : Seq[DataCenter], lineData : Seq[Line]) : Array[Byte] = {
 	// Add the speed and the time as metadata, for use by the XHTML wrapper
 	val num_steps = {
 		// Lengths of all the elements of the animation
@@ -209,7 +234,7 @@ def generate_visualization(anim_time_per_step : Double, world_time_per_step : Do
 		duration={"%.4f" format (num_steps * anim_time_per_step)}
 	/>.convert
 	
-	val map_with_timing_metadata : Elem = {
+	var doc : Elem = {
 		val metadata_elem_zipper : Zipper[Elem] = BACKGROUND_MAP \ "metadata"
 		val map_with_updated_metadata_elem = metadata_elem_zipper.updated(0, metadata_elem_zipper.head addChild timing_metadata).unselect apply 0
 		// Zipper.unselect has unnecessarily restrictive type. Work around by casting. (Cheat, but seems to work)
@@ -222,7 +247,7 @@ def generate_visualization(anim_time_per_step : Double, world_time_per_step : Do
 	</g>.convert
 	
 	// Append to the svg document as child
-	val doc = map_with_timing_metadata addChild overlay
+	doc = doc addChild draw_legend(dclegend, dccolors) addChild overlay
 	
 	val os = new java.io.ByteArrayOutputStream
 	XMLSerializer(outputDeclaration = true).serializeDocument(doc, os)
