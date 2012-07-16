@@ -40,7 +40,7 @@ def draw_dot(coords : WorldPt) : Elem = {
 
 /** Draws an animated data center indicator at the specified coordinates, displaying the given stats over time.
 @return an SVG fragment to be inserted into the SVG document. */
-def draw_datacenter(anim_time_per_step : Double, dc : DataCenter) : Group[Node] = {
+def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataCenterColors) : Group[Node] = {
 	val DataCenter(coords, stats) = dc
 	val DevicePt(x, y) = coords.toDevicePt
 	
@@ -60,9 +60,8 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter) : Group[Node] 
 	*/
 	val supply_sector_stats = stats map (_.supplies)
 	val sector_g = <g style="opacity: 0.7;">{
-		val NUM_SUPPLY_SECTORS = supply_sector_stats(0).length
-		// Evenly distributed around the color wheel
-		val SUPPLY_COLORS = 0 until NUM_SUPPLY_SECTORS map (360.0 / NUM_SUPPLY_SECTORS * _) map ("hsl(%.4f, 100%%, 70%%)" format _)
+		val NUM_SUPPLY_SECTORS = supply_sector_stats(0).productArity
+		val SUPPLY_COLORS = colors.supplies
 		/** Radius of a full sector (for value = 1.0) */
 		val r = 30
 		
@@ -109,11 +108,11 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter) : Group[Node] 
 					/>.convert
 		}
 		
-		val demand_side : Elem = draw_sector(0.5 * math.Pi, 1.5 * math.Pi, "yellow") animate_radius
+		val demand_side : Elem = draw_sector(0.5 * math.Pi, 1.5 * math.Pi, colors.demand) animate_radius
 			(stats map (_.demand))
 		
 		val supply_side : Elem = {
-			val supply_totals = supply_sector_stats map (_.sum)
+			val supply_totals = supply_sector_stats map (_.asSeq.sum)
 			/** Fraction of available energy each sector represents */
 			val supply_fracs = supply_sector_stats zip supply_totals map {case (sstats, total) ⇒ sstats map (_ / total)}
 			val supply_sectors = (0 until NUM_SUPPLY_SECTORS map { s ⇒ {
@@ -127,10 +126,10 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter) : Group[Node] 
 				// Each one starts as a semicircle on the right side
 				val (start_angle, end_angle) : (Double, Double) = (-0.5, 0.5) map (_ * math.Pi )
 				
-				val unrotated_sector = draw_sector(start_angle, end_angle, SUPPLY_COLORS(s))
+				val unrotated_sector = draw_sector(start_angle, end_angle, SUPPLY_COLORS.asSeq(s))
 				// Animate rotating sector to correct position
 				// At each point in time, rotate by the sum of values for sectors (0 until s)
-				val θs : Seq[Double] = supply_fracs map (_.slice(0, s).sum)
+				val θs : Seq[Double] = supply_fracs map (_.asSeq.slice(0, s).sum)
 				unrotated_sector animate_rotations (θs map (-_ * 180.0/* svg uses degrees */))
 			}})
 			// Clip so that only right side is visible.
@@ -192,7 +191,7 @@ Generates an SVG map visualization according to the provided data.
 @param anim_time_per_step Animated time per step of the animation, in s
 @param world_time_per_step Real-world time per step of the animation, in s
 */
-def generate_visualization(anim_time_per_step : Double, world_time_per_step : Double, dcdata : Seq[DataCenter], lineData : Seq[Line]) : Array[Byte] = {
+def generate_visualization(anim_time_per_step : Double, world_time_per_step : Double, dccolors : DataCenterColors, dcdata : Seq[DataCenter], lineData : Seq[Line]) : Array[Byte] = {
 	// Add the speed and the time as metadata, for use by the XHTML wrapper
 	val num_steps = {
 		// Lengths of all the elements of the animation
@@ -219,7 +218,7 @@ def generate_visualization(anim_time_per_step : Double, world_time_per_step : Do
 	
 	val overlay = <g id="overlay">
 		{lineData map (line ⇒ U(draw_line(anim_time_per_step, line)))}
-		{dcdata map (dc ⇒ U(draw_datacenter(anim_time_per_step, dc)))}
+		{dcdata map (dc ⇒ U(draw_datacenter(anim_time_per_step, dc, dccolors)))}
 	</g>.convert
 	
 	// Append to the svg document as child

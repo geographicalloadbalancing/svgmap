@@ -14,6 +14,9 @@ implicit def t2mapper[X, X0 <: X, X1 <: X](t: (X0, X1)) = new {
 implicit def t3mapper[X, X0 <: X, X1 <: X, X2 <: X](t: (X0, X1, X2)) = new {
 	def map[R](f: X => R) = (f(t._1), f(t._2), f(t._3))
 }
+implicit def t3asSeq[X, X0 <: X, X1 <: X, X2 <: X](t: (X0, X1, X2)) = new {
+	def asSeq : Seq[X] = List(t._1, t._2, t._3)
+}
 
 private val IMAGE_WIDTH = 1181
 private val IMAGE_HEIGHT = 731
@@ -37,11 +40,17 @@ Describes a data center, and encapsulates various statistics for it over time.
 */
 case class DataCenter(coords : WorldPt, stats : Seq[DataCenterState])
 
+/** Represents arbitrary values for each data center statistic. Used to ensure that colors and actual values have the same schema. */  
+case class DataCenterVals[T](demand : T, supplies : (T, T, T))
+
 /** Represents the current state of a particular data center. Each statistic should be in [0, 1].
 @param demand the data center's current energy demand
 @param supplies a list of the amounts of energy from various source types (e.g. solar, wind, grid) that are available now
 */
-case class DataCenterState(demand : Double, supplies : Seq[Double])
+type DataCenterState = DataCenterVals[Double]
+val DataCenterState = DataCenterVals[Double] _
+type DataCenterColors = DataCenterVals[String]
+val DataCenterColors = DataCenterVals[String] _
 
 /**
 Describes a connection between two locations. */

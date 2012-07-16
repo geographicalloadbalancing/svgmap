@@ -42,14 +42,15 @@ object Main {def main(args : Array[String]) = {
 				raw zip raw flatMap {case (x, y) ⇒ List(x, y) }
 			}
 			val total_for_dc = total map (_(dc))
-			DataCenter(dc_loc, solar_for_dc zip wind_for_dc zip total_for_dc map {case ((s, w), t) ⇒ {
-				val max_demand = 4.1335e+05	// scale input data
+			DataCenter(dc_loc, solar_for_dc zip wind_for_dc zip total_for_dc map {case ((sstr, wstr), tstr) ⇒ {
+				val (s, w, t) : (Double, Double, Double) = (sstr, wstr, tstr) map (_.toDouble)
+				val max_demand : Double = 4.1335e+05	// scale input data
 				// Clamp negative values to 0.
 				DataCenterState(
-					/* demand */ (t.toDouble max 0) / max_demand, List(
-						/* solar */  (s.toDouble max 0),
-						/* wind */  (w.toDouble max 0),
-						/* brown */ (t.toDouble - s.toDouble - w.toDouble) max 0
+					/* demand */ (t max 0) / max_demand, (
+						/* solar */  (s max 0),
+						/* wind */  (w max 0),
+						/* brown */ (t - s - w) max 0
 				) map (_/max_demand))
 			}})
 		}}
@@ -109,6 +110,9 @@ object Main {def main(args : Array[String]) = {
 	
 	val anim_time_per_step : Double = 0.2 /*s*/
 	val world_time_per_step : Double= 5 /*min*/ * 60 /*s / min*/
-	System.out write generate_visualization(anim_time_per_step, world_time_per_step, dcs, lines)
+	
+	val dccolors = DataCenterColors("yellow", ("#08F", "#0F0", "brown"))
+	
+	System.out write generate_visualization(anim_time_per_step, world_time_per_step, dccolors, dcs, lines)
 
 }}
