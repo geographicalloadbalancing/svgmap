@@ -20,6 +20,23 @@ val BACKGROUND_MAP : Elem = {
 	XML fromInputStream (ClassLoader getSystemResourceAsStream "edu/caltech/glb/svgmap/base_map.svg")
 }
 
+/** Dimensions of the map, as read from the input blank map. */
+private val MAP_DIMENSIONS : DevicePt =
+	BACKGROUND_MAP.attrs get "viewBox" map (_ split " " map parseInt) match {
+		case Some(Array(Some(0), Some(0), Some(w), Some(h))) ⇒ DevicePt(w, h)
+		case _ ⇒ throw new NumberFormatException("Unable to parse dimensions of map")
+	}
+/** Extends the WorldPt class, allowing it to be transformed into a DevicePt. It's in this file because it uses information from the input file. */
+private[this] implicit def transformWorldPt(pt : WorldPt) = new {
+	def toDevicePt = {
+		// This transform is given on the Wikipedia page http://en.wikipedia.org/wiki/Template:Location_map_USA2
+		val xscaled = 50.0 + 124.03149777329222 * ((1.9694462586094064-(pt.lat * math.Pi / 180)) * math.sin(0.6010514667026994 * (pt.long + 96) * math.Pi / 180))
+		val yscaled = 50.0 + 1.6155950752393982 * 124.03149777329222 * (0.02613325650382181 - (1.3236744353715044 - (1.9694462586094064 - (pt.lat * math.Pi / 180)) * math.cos(0.6010514667026994 * (pt.long + 96) * math.Pi / 180)))
+		// According to the docs, this maps onto a 100×100 square, so we must scale to the actual image size
+		DevicePt(xscaled * MAP_DIMENSIONS.x / 100, yscaled * MAP_DIMENSIONS.y / 100)
+	}
+}
+
 /**
 The total time the animation should run, if there are <var>n</var> time steps to display.
  @return the total time, as a string that can be inserted into the SVG
