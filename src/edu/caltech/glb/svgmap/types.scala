@@ -61,4 +61,11 @@ case class Line(p1 : WorldPt, p2 : WorldPt, stats : Seq[LineState])
 Describe a line's states, including the various statistics for it over time.
 */
 case class LineState(opacity : Double, width : Double)
+
+/** Describes a single statistic to be plotted in the line plot.
+Each value should be between 0 and 1.
+Each index corresponds to 1 step of the animation. */
+case class LinePlotStat(color : String, vals : Seq[Double]) {
+	vals map {_ ensuring (0.0 <= _)} foreach {_ ensuring (_ <= 1.0)}
+}
 }

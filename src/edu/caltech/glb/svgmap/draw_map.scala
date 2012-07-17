@@ -228,8 +228,53 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 }
 
 
-//@@@@@Line plot
+/** Height of the entire line plot element */
 val LINE_PLOT_HEIGHT : Int = 100
+/**
+Draws all the statistics on a line plot. The plot has a moving vertical line indicating the current time.
+
+The top 90px is used to display the graph proper. A margin of 10px is reserved for time-axis labels.
+@param numSteps the number of data points to draw for each statistic (should equal the number of steps in the animation).
+*/
+def draw_line_plot(stats : Seq[LinePlotStat], numSteps : Int) : Elem = {
+	val AXIS_LABEL_HEIGHT = 10
+	// Top and bottom of main graph region (excluding stuff outside the axes
+	val y_top : Double = MAP_DIMENSIONS.y
+	val main_plot_height = LINE_PLOT_HEIGHT - AXIS_LABEL_HEIGHT
+	val y_bot : Double = MAP_DIMENSIONS.y + main_plot_height	// leave space for axis label
+	// @@@@ draw axis labels and vertical line indicator
+	
+	
+	/** Plots a single line to be placed on the line chart.
+	The chart is drawn between 0 and MAP_DIMENSIONS.x on the x-axis, and between 0 and -main_plot_height on the y-axis. */
+	def plot_one_line(stat : LinePlotStat) : Elem =
+		<polyline
+			fill="none"
+			stroke={stat.color}
+			stroke-width="2px"
+			points={	// Just draw segments
+				stat.vals.zipWithIndex map {case (v, t) ⇒ 
+					val horiz = (t.toDouble / numSteps) * MAP_DIMENSIONS.x
+					val vert = (1.0 - v) * main_plot_height
+					"%.2f,%.2f" format (horiz, vert)
+				} mkString " "
+			}
+		/>.convert
+	
+	<g id="linePlot" clip-path="url(#linePlotClip)" transform={"translate(0, %.0f)" format y_top}>
+		<rect id="linePlotRect"
+			x="0" y="0"
+			width={MAP_DIMENSIONS.x.toString} height={LINE_PLOT_HEIGHT.toString}
+			style="fill: #ffffee; stroke-width: 1px; stroke: #005000"
+		/>
+		<clipPath id="linePlotClip">
+			<use xlink:href="#linePlotRect"/>
+		</clipPath>
+		<g opacity="0.8">
+			{stats map plot_one_line map U}
+		</g>
+	</g>.convert
+}
 
 
 /**
@@ -263,6 +308,9 @@ def generate_visualization(anim_time_per_step : Double, world_time_per_step : Do
 	}
 	// Expand viewport to include the graph of system stats
 	doc = doc.withAttribute("viewBox", "0 0 %d %d".format(MAP_DIMENSIONS.x.round, MAP_DIMENSIONS.y.round + LINE_PLOT_HEIGHT))
+	doc = doc addChild draw_line_plot({
+		List(LinePlotStat("pink", List(0.3,0.4,0.9,0.2)))//@@@@ use real data
+	}, num_steps)
 	
 	val overlay = <g id="overlay">
 		{lineData map (line ⇒ U(draw_line(anim_time_per_step, line)))}
