@@ -228,6 +228,10 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 }
 
 
+//@@@@@Line plot
+val LINE_PLOT_HEIGHT : Int = 100
+
+
 /**
 Generates an SVG map visualization according to the provided data.
 @param anim_time_per_step Animated time per step of the animation, in s
@@ -257,6 +261,8 @@ def generate_visualization(anim_time_per_step : Double, world_time_per_step : Do
 		// Zipper.unselect has unnecessarily restrictive type. Work around by casting. (Cheat, but seems to work)
 		map_with_updated_metadata_elem.asInstanceOf[Elem]
 	}
+	// Expand viewport to include the graph of system stats
+	doc = doc.withAttribute("viewBox", "0 0 %d %d".format(MAP_DIMENSIONS.x.round, MAP_DIMENSIONS.y.round + LINE_PLOT_HEIGHT))
 	
 	val overlay = <g id="overlay">
 		{lineData map (line ⇒ U(draw_line(anim_time_per_step, line)))}
