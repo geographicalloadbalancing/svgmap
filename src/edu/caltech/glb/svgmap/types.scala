@@ -3,7 +3,15 @@ Defines several data types representing data centers and their state.
 */
 
 package edu.caltech.glb.svgmap
-class svgmap_types {
+/** This trait exists to work around a corner case in Scala's package system. It should not be used directly.
+
+Scala allows you to split a package over multiple files.
+It also lets you put values (incl. functions) directly in a package by declaring a package object.
+The problem is that objects <em>cannot</em> be split over multiple files.
+As a workaround, we declare a package-private trait in this file, and in the other file declare a package object that extends this trait
+(and thereby inherits all the variables declared herein).
+*/
+private[svgmap] trait svgmap_types {
 
 // This is cool
 /** Enables mapping over 2-tuples. */
