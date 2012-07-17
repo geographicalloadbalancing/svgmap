@@ -3,7 +3,15 @@ Defines several data types representing data centers and their state.
 */
 
 package edu.caltech.glb.svgmap
-class svgmap_types {
+/** This trait exists to work around a corner case in Scala's package system. It should not be used directly.
+
+Scala allows you to split a package over multiple files.
+It also lets you put values (incl. functions) directly in a package by declaring a package object.
+The problem is that objects <em>cannot</em> be split over multiple files.
+As a workaround, we declare a package-private trait in this file, and in the other file declare a package object that extends this trait
+(and thereby inherits all the variables declared herein).
+*/
+private[svgmap] trait svgmap_types {
 
 // This is cool
 /** Enables mapping over 2-tuples. */
@@ -24,19 +32,10 @@ implicit def t3asSeq[X, X0 <: X, X1 <: X, X2 <: X](t: (X0, X1, X2)) = new {
 	def asSeq : Seq[X] = List(t._1, t._2, t._3)
 }
 
-private val IMAGE_WIDTH = 1181
-private val IMAGE_HEIGHT = 731
+def parseInt(str : String) : Option[Int] = try {Some(str.toInt)} catch {case _ : NumberFormatException ⇒ None}
 
 /** A real-world point, specified by a latitude and longitude in degrees. */
-case class WorldPt(lat : Double, long : Double) {
-	def toDevicePt = {
-		// This transform is given on the Wikipedia page http://en.wikipedia.org/wiki/Template:Location_map_USA2
-		val xscaled = 50.0 + 124.03149777329222 * ((1.9694462586094064-(lat * math.Pi / 180)) * math.sin(0.6010514667026994 * (long + 96) * math.Pi / 180))
-		val yscaled = 50.0 + 1.6155950752393982 * 124.03149777329222 * (0.02613325650382181 - (1.3236744353715044 - (1.9694462586094064 - (lat * math.Pi / 180)) * math.cos(0.6010514667026994 * (long + 96) * math.Pi / 180)))
-		// According to the docs, this maps onto a 100×100 square, so we must scale to the actual image size
-		DevicePt(xscaled * IMAGE_WIDTH / 100, yscaled * IMAGE_HEIGHT / 100)
-	}
-}
+case class WorldPt(lat : Double, long : Double)
 
 /** A point in device coordinates. Note that y increases as you go <em>down</em>. */
 case class DevicePt(x : Double, y : Double)
@@ -57,6 +56,8 @@ type DataCenterState = DataCenterVals[Double]
 val DataCenterState = DataCenterVals[Double] _
 type DataCenterColors = DataCenterVals[String]
 val DataCenterColors = DataCenterVals[String] _
+type DataCenterLegendText = DataCenterVals[String]
+val DataCenterLegendText = DataCenterVals[String] _
 
 /**
 Describes a connection between two locations. */

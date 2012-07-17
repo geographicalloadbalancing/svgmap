@@ -20,6 +20,23 @@ val BACKGROUND_MAP : Elem = {
 	XML fromInputStream (ClassLoader getSystemResourceAsStream "edu/caltech/glb/svgmap/base_map.svg")
 }
 
+/** Dimensions of the map, as read from the input blank map. */
+private val MAP_DIMENSIONS : DevicePt =
+	BACKGROUND_MAP.attrs get "viewBox" map (_ split " " map parseInt) match {
+		case Some(Array(Some(0), Some(0), Some(w), Some(h))) ⇒ DevicePt(w, h)
+		case _ ⇒ throw new NumberFormatException("Unable to parse dimensions of map")
+	}
+/** Extends the WorldPt class, allowing it to be transformed into a DevicePt. It's in this file because it uses information from the input file. */
+private[this] implicit def transformWorldPt(pt : WorldPt) = new {
+	def toDevicePt = {
+		// This transform is given on the Wikipedia page http://en.wikipedia.org/wiki/Template:Location_map_USA2
+		val xscaled = 50.0 + 124.03149777329222 * ((1.9694462586094064-(pt.lat * math.Pi / 180)) * math.sin(0.6010514667026994 * (pt.long + 96) * math.Pi / 180))
+		val yscaled = 50.0 + 1.6155950752393982 * 124.03149777329222 * (0.02613325650382181 - (1.3236744353715044 - (1.9694462586094064 - (pt.lat * math.Pi / 180)) * math.cos(0.6010514667026994 * (pt.long + 96) * math.Pi / 180)))
+		// According to the docs, this maps onto a 100×100 square, so we must scale to the actual image size
+		DevicePt(xscaled * MAP_DIMENSIONS.x / 100, yscaled * MAP_DIMENSIONS.y / 100)
+	}
+}
+
 /**
 The total time the animation should run, if there are <var>n</var> time steps to display.
  @return the total time, as a string that can be inserted into the SVG
@@ -185,13 +202,42 @@ def draw_line(anim_time_per_step : Double, line : Line) : Group[Node] = {
 	</g>.convert
 }
 
+/**
+Draws a legend identifying the colors used.
+*/
+def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem = {
+	val stats : Seq[(String, String)] = (labels.demand +: labels.supplies.asSeq) zip (colors.demand +: colors.supplies.asSeq)
+	
+	<g id="legendWrap" clip-path="url(#legendClip)" transform="translate(700, 4)">
+		<rect id="legendRect"
+			x="0" y="0"
+			width="200" height={(4 + (16 + 4) * stats.length).toString}
+			style="fill: #e0fff0; stroke-width: 3px; stroke: #000050"
+		/>
+		<clipPath id="legendClip">
+			<use xlink:href="#legendRect"/>
+		</clipPath>
+		{stats.zipWithIndex map {case ((label, color), i) ⇒
+			val y : Int = 4 + (16 + 4) * i
+			<g transform={"translate(0, %d)" format y}>
+				<use xlink:href="#legendColorSquare" fill={color}/>
+				<text x="24" y="12" font-size="16px">{label}</text>
+			</g>
+		}}
+	</g>.convert
+}
+
+
+//@@@@@Line plot
+val LINE_PLOT_HEIGHT : Int = 100
+
 
 /**
 Generates an SVG map visualization according to the provided data.
 @param anim_time_per_step Animated time per step of the animation, in s
 @param world_time_per_step Real-world time per step of the animation, in s
 */
-def generate_visualization(anim_time_per_step : Double, world_time_per_step : Double, dccolors : DataCenterColors, dcdata : Seq[DataCenter], lineData : Seq[Line]) : Array[Byte] = {
+def generate_visualization(anim_time_per_step : Double, world_time_per_step : Double, dclegend : DataCenterLegendText, dccolors : DataCenterColors, dcdata : Seq[DataCenter], lineData : Seq[Line]) : Array[Byte] = {
 	// Add the speed and the time as metadata, for use by the XHTML wrapper
 	val num_steps = {
 		// Lengths of all the elements of the animation
@@ -209,12 +255,14 @@ def generate_visualization(anim_time_per_step : Double, world_time_per_step : Do
 		duration={"%.4f" format (num_steps * anim_time_per_step)}
 	/>.convert
 	
-	val map_with_timing_metadata : Elem = {
+	var doc : Elem = {
 		val metadata_elem_zipper : Zipper[Elem] = BACKGROUND_MAP \ "metadata"
 		val map_with_updated_metadata_elem = metadata_elem_zipper.updated(0, metadata_elem_zipper.head addChild timing_metadata).unselect apply 0
 		// Zipper.unselect has unnecessarily restrictive type. Work around by casting. (Cheat, but seems to work)
 		map_with_updated_metadata_elem.asInstanceOf[Elem]
 	}
+	// Expand viewport to include the graph of system stats
+	doc = doc.withAttribute("viewBox", "0 0 %d %d".format(MAP_DIMENSIONS.x.round, MAP_DIMENSIONS.y.round + LINE_PLOT_HEIGHT))
 	
 	val overlay = <g id="overlay">
 		{lineData map (line ⇒ U(draw_line(anim_time_per_step, line)))}
@@ -222,7 +270,7 @@ def generate_visualization(anim_time_per_step : Double, world_time_per_step : Do
 	</g>.convert
 	
 	// Append to the svg document as child
-	val doc = map_with_timing_metadata addChild overlay
+	doc = doc addChild draw_legend(dclegend, dccolors) addChild overlay
 	
 	val os = new java.io.ByteArrayOutputStream
 	XMLSerializer(outputDeclaration = true).serializeDocument(doc, os)
