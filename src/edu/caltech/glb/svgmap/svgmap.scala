@@ -114,6 +114,13 @@ object Main {def main(args : Array[String]) = {
 	val dccolors = DataCenterColors("yellow", ("#08F", "#0F0", "brown"))
 	val dclegend = DataCenterLegendText("power demand", ("solar power available", "wind power available", "grid power usage"))
 	
-	System.out write generate_visualization(anim_time_per_step, world_time_per_step, dclegend, dccolors, dcs, lines)
+	val line_plot_stats = List(
+		LinePlotStat(/* Total energy demand of all DCs */"#FFFF00", {
+			val totals : Seq[Double] = ((dcs(0).stats map {_ ⇒ 0.0}) /: dcs){case (totals, dc) ⇒ (totals, dc.stats map (_.demand)).zipped map (_+_)}
+			totals map (_/totals.max)
+		})
+	)
+	
+	System.out write generate_visualization(anim_time_per_step, world_time_per_step, dclegend, dccolors, dcs, lines, line_plot_stats)
 
 }}

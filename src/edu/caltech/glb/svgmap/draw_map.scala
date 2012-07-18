@@ -285,7 +285,7 @@ Generates an SVG map visualization according to the provided data.
 @param anim_time_per_step Animated time per step of the animation, in s
 @param world_time_per_step Real-world time per step of the animation, in s
 */
-def generate_visualization(anim_time_per_step : Double, world_time_per_step : Double, dclegend : DataCenterLegendText, dccolors : DataCenterColors, dcdata : Seq[DataCenter], lineData : Seq[Line]) : Array[Byte] = {
+def generate_visualization(anim_time_per_step : Double, world_time_per_step : Double, dclegend : DataCenterLegendText, dccolors : DataCenterColors, dcdata : Seq[DataCenter], lineData : Seq[Line], line_plot_stats : Seq[LinePlotStat]) : Array[Byte] = {
 	// Add the speed and the time as metadata, for use by the XHTML wrapper
 	val num_steps = {
 		// Lengths of all the elements of the animation
@@ -311,9 +311,7 @@ def generate_visualization(anim_time_per_step : Double, world_time_per_step : Do
 	}
 	// Expand viewport to include the graph of system stats
 	doc = doc.withAttribute("viewBox", "0 0 %d %d".format(MAP_DIMENSIONS.x.round, MAP_DIMENSIONS.y.round + LINE_PLOT_HEIGHT))
-	doc = doc addChild draw_line_plot({
-		List(LinePlotStat("pink", List(0.3,0.4,0.9,0.2)))//@@@@ use real data
-	}, num_steps)
+	doc = doc addChild draw_line_plot(line_plot_stats, num_steps)
 	
 	val overlay = <g id="overlay">
 		{lineData map (line ⇒ U(draw_line(anim_time_per_step, line)))}
