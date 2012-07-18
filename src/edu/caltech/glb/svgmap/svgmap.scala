@@ -104,7 +104,7 @@ object Main {def main(args : Array[String]) = {
 	val world_time_per_step : Double= 5 /*min*/ * 60 /*s / min*/
 	
 	val dccolors = DataCenterColors("yellow", ("#08F", "#0F0", "brown"))
-	val dclegend = DataCenterLegendText("power demand", ("solar power available", "wind power available", "grid power usage"))
+	val dclegend = DataCenterLegendText("total consumption", ("from solar", "from wind", "from grid"))
 	
 	System.out write generate_visualization(anim_time_per_step, world_time_per_step, dclegend, dccolors, dcs, lines)
 

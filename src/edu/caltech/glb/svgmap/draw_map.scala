@@ -207,23 +207,69 @@ Draws a legend identifying the colors used.
 */
 def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem = {
 	val stats : Seq[(String, String)] = (labels.demand +: labels.supplies.asSeq) zip (colors.demand +: colors.supplies.asSeq)
-	
-	<g id="legendWrap" clip-path="url(#legendClip)" transform="translate(700, 4)">
+	// l is a list of labels.
+	val l = stats map (_._1)
+	val r = 60
+	// Draws a single static sector of the sector chart
+	def draw_sector(start_angle : Double, end_angle : Double, color : String) : Elem = {
+		// Calculate sector's endpoints
+		val (start_x, end_x) = (start_angle, end_angle) map (+r * math.cos(_))
+		val (start_y, end_y) = (start_angle, end_angle) map (-r * math.sin(_))
+
+		// Defines outline of sector
+		val path : String = (
+		  /* center */ "M 0,0" +
+		  /* draw line */ " L " + ("%.4f" format start_x) + "," + ("%.4f" format start_y) +
+		  // Set sweep-flag to 0 (to draw the arc in the standard direction)
+		  /* draw arc */ " A " + r + "," + r + " 0 0 0 " + ("%.4f" format end_x) + "," + ("%.4f" format end_y) +
+		  /* close with line */ " Z"
+		  )
+
+			<path
+			d={path}
+			style={"fill: " + color + "; stroke: black; stroke-width: 1px; vector-effect: non-scaling-stroke;"}
+			/>.convert
+	}
+	def label_sector(startR : Double, length : Double, theta : Double, label:String) : Elem = {
+		val endR = startR + length
+		val x1 = startR * math.cos(theta)
+		val y1 = - startR * math.sin(theta)
+		val x2 = endR * math.cos(theta)
+		val y2 = - endR * math.sin(theta)
+		val label_y = y2 * 1.1 + 5
+		val label_x = x2 + (x2.signum * 120).min(10)
+		<g>
+			<line x1={"%.1f" format x1} x2={"%.1f" format x2} y1={"%.1f" format y1} y2={"%.1f" format y2}
+			      style="stroke: black; stroke-width: 1.5px;">
+			</line>
+			<text x={"%.1f" format label_x} y={"%.1f" format label_y} font-size="16px">{label}</text>
+		</g>.convert
+	}
+
+	val NUM_SUPPLY_SECTORS = colors.supplies.productArity
+	val demand_side : Elem = draw_sector(0.5 * math.Pi, 1.5 * math.Pi, colors.demand)
+	val supply_sectors = (0 until NUM_SUPPLY_SECTORS map { s ⇒ {
+		val (start_angle, end_angle) : (Double, Double) = (1.5, 1.8333) map (_ + 0.333 * s) map (_* math.Pi)
+		draw_sector(start_angle, end_angle, colors.supplies.asSeq(s))
+	}})
+
+	val sectorLabels = List(1.25, 1.666, 2, 2.333) map (_* math.Pi) zip l map
+	            {case (alpha, label) ⇒ {label_sector(30, 40, alpha.toDouble, label)}}
+
+	<g id="legendWrap" clip-path="url(#legendClip)" transform="translate(0, 600)">
 		<rect id="legendRect"
 			x="0" y="0"
-			width="200" height={(4 + (16 + 4) * stats.length).toString}
+			width="350" height="250"
 			style="fill: #e0fff0; stroke-width: 3px; stroke: #000050"
 		/>
 		<clipPath id="legendClip">
 			<use xlink:href="#legendRect"/>
 		</clipPath>
-		{stats.zipWithIndex map {case ((label, color), i) ⇒
-			val y : Int = 4 + (16 + 4) * i
-			<g transform={"translate(0, %d)" format y}>
-				<use xlink:href="#legendColorSquare" fill={color}/>
-				<text x="24" y="12" font-size="16px">{label}</text>
-			</g>
-		}}
+		<g>
+			<text x="50" y="50" font-size="20px">Demand</text>
+			<text x="220" y="50" font-size="20px">Supply</text>
+		</g>
+		<g transform ="translate(175, 150)"> {U(demand_side)}{supply_sectors map U}{sectorLabels map U} </g>
 	</g>.convert
 }
 
