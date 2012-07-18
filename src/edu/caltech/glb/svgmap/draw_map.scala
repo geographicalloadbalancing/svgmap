@@ -242,6 +242,8 @@ def draw_line_plot(stats : Seq[LinePlotStat], numSteps : Int) : Elem = {
 	val y_top : Double = MAP_DIMENSIONS.y
 	val main_plot_height = LINE_PLOT_HEIGHT - AXIS_LABEL_HEIGHT
 	val y_bot : Double = MAP_DIMENSIONS.y + main_plot_height	// leave space for axis label
+	
+	val x_axis : Elem = <line x1="0" x2={MAP_DIMENSIONS.x.toString} y1={main_plot_height.toString} y2={main_plot_height.toString} stroke="#000" stroke-width="1"/>.convert
 	// @@@@ draw axis labels and vertical line indicator
 	
 	
@@ -271,6 +273,7 @@ def draw_line_plot(stats : Seq[LinePlotStat], numSteps : Int) : Elem = {
 			<use xlink:href="#linePlotRect"/>
 		</clipPath>
 		<g opacity="0.8">
+			{U(x_axis)}
 			{stats map plot_one_line map U}
 		</g>
 	</g>.convert
