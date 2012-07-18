@@ -102,7 +102,7 @@ object Main {def main(args : Array[String]) = {
 	
 	val anim_time_per_step : Double = 0.2 /*s*/
 	val world_time_per_step : Double= 5 /*min*/ * 60 /*s / min*/
-	
+
 	val dccolors = DataCenterColors("yellow", ("#0A8", "#0F0", "brown"))
 	val dclegend = DataCenterLegendText("total consumption", ("from solar", "from wind", "from grid"))
 	

@@ -207,6 +207,7 @@ Draws a legend identifying the colors used.
 */
 def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem = {
 	val stats : Seq[(String, String)] = (labels.demand +: labels.supplies.asSeq) zip (colors.demand +: colors.supplies.asSeq)
+	val NUM_SUPPLY_SECTORS = colors.supplies.productArity
 	// l is a list of labels.
 	val l = stats map (_._1)
 	val r = 60
@@ -230,14 +231,20 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 			style={"fill: " + color + "; stroke: black; stroke-width: 1px; vector-effect: non-scaling-stroke;"}
 			/>.convert
 	}
+
+	//This function draw a line from a sector and label it with the text specified in "label"
+	// The line is specified by a start distance from the center, the angle and the length (polar coord)
 	def label_sector(startR : Double, length : Double, theta : Double, label:String) : Elem = {
+		// Translate the end points into cartesian form
 		val endR = startR + length
 		val x1 = startR * math.cos(theta)
 		val y1 = - startR * math.sin(theta)
 		val x2 = endR * math.cos(theta)
 		val y2 = - endR * math.sin(theta)
+		// Position the text (Magic number used.)
 		val label_y = y2 * 1.2 + 5
 		val label_x = x2 + (x2.signum * 120).min(10)
+		// Draw the line and the text.
 		<g>
 			<line x1={"%.1f" format x1} x2={"%.1f" format x2} y1={"%.1f" format y1} y2={"%.1f" format y2}
 			      style="stroke: black; stroke-width: 1.5px;">
@@ -245,18 +252,19 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 			<text x={"%.1f" format label_x} y={"%.1f" format label_y} font-size="16px">{label}</text>
 		</g>.convert
 	}
-
-	val NUM_SUPPLY_SECTORS = colors.supplies.productArity
+     // Draw the sectors
 	val demand_side : Elem = draw_sector(0.5 * math.Pi, 1.5 * math.Pi, colors.demand)
 	val supply_sectors = (0 until NUM_SUPPLY_SECTORS map { s ⇒ {
 		val (start_angle, end_angle) : (Double, Double) = (1.5, 1.8333) map (_ + 0.333 * s) map (_* math.Pi)
 		draw_sector(start_angle, end_angle, colors.supplies.asSeq(s))
 	}})
-
+     // Generate the labels
 	val sectorLabels = List(1.25, 1.666, 2, 2.333) map (_* math.Pi) zip l map
 	            {case (alpha, label) ⇒ {label_sector(30, 40, alpha.toDouble, label)}}
+	// Set the legend box size
      val legendWidth = 320
 	val legendHeight = 220
+	// Display the legend.
 	<g id="legendWrap" clip-path="url(#legendClip)" transform={"translate(3," + (MAP_DIMENSIONS.y - legendHeight) + ")"}>
 		<rect id="legendRect"
 			x="0" y="0"
