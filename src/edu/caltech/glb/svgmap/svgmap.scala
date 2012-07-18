@@ -114,12 +114,18 @@ object Main {def main(args : Array[String]) = {
 	val dccolors = DataCenterColors("yellow", ("#08F", "#0F0", "brown"))
 	val dclegend = DataCenterLegendText("power demand", ("solar power available", "wind power available", "grid power usage"))
 	
-	val line_plot_stats = List(
-		LinePlotStat(/* Total energy demand of all DCs */"#FFFF00", {
-			val totals : Seq[Double] = ((dcs(0).stats map {_ ⇒ 0.0}) /: dcs){case (totals, dc) ⇒ (totals, dc.stats map (_.demand)).zipped map (_+_)}
-			totals map (_/totals.max)
-		})
-	)
+	val line_plot_stats = {
+		val totals0 = dcs(0).stats map {_ ⇒ 0.0}
+		// Calculates the sum (or other f) over all DCs, for each time t, returning a list of the totals over time.
+		def foldDCs(stat_selector : DataCenterState ⇒ Double, f : (Double, Double) ⇒ Double = (_+_)) =
+			(totals0 /: dcs){case (totals, dc) ⇒ (totals, dc.stats map stat_selector).zipped map f}
+		val max_Σ_demand : Double = foldDCs(_.demand).max
+		List(
+			LinePlotStat(/* Total energy demand of all DCs */"#FFFF00", foldDCs(_.demand) map (_/max_Σ_demand)),
+			LinePlotStat(/* Total brown energy usage of all DCs */"brown", foldDCs(_.supplies._3) map (_/max_Σ_demand)),
+			LinePlotStat(/* Total renewables available over all DCs */"#00FF00", foldDCs(_.supplies match {case (s, w, _) ⇒ s + w}) map (_/max_Σ_demand))
+		)
+	}
 	
 	System.out write generate_visualization(anim_time_per_step, world_time_per_step, dclegend, dccolors, dcs, lines, line_plot_stats)
 
