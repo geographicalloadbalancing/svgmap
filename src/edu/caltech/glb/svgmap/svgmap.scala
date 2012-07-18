@@ -39,7 +39,7 @@ object Main {def main(args : Array[String]) = {
 			val wind_for_dc = {
 				val raw = wind map (_(dc))
 				// interleave with self
-				raw zip raw flatMap {case (x, y) ⇒ List(x, y) }
+				(raw, raw).zipped flatMap (List(_, _))
 			}
 			val total_for_dc = total map (_(dc))
 			DataCenter(dc_loc, solar_for_dc zip wind_for_dc zip total_for_dc map {case ((sstr, wstr), tstr) ⇒ {
@@ -101,9 +101,9 @@ object Main {def main(args : Array[String]) = {
 				// load_data is longer; discard the rest
 				// the line opacity is the fraction of the total load of a population center
 				// i.e. lambda_{ij}/lambda{j}
-				val line_opacity = line_data zip load_data map {case (line, load) ⇒ line / load}
+				val line_opacity = (line_data, load_data).zipped map (_/_)
 				val line_width = load_data_normalized map {_*7}
-				Line(client_loc, dc_loc, (line_opacity zip line_width) map {case (o, w) ⇒ LineState(o, w)})
+				Line(client_loc, dc_loc, (line_opacity, line_width).zipped map LineState)
 			}}
 		}
 	}
