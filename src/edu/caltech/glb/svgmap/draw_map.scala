@@ -236,7 +236,7 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 		val y1 = - startR * math.sin(theta)
 		val x2 = endR * math.cos(theta)
 		val y2 = - endR * math.sin(theta)
-		val label_y = y2 * 1.1 + 5
+		val label_y = y2 * 1.2 + 5
 		val label_x = x2 + (x2.signum * 120).min(10)
 		<g>
 			<line x1={"%.1f" format x1} x2={"%.1f" format x2} y1={"%.1f" format y1} y2={"%.1f" format y2}
@@ -255,21 +255,24 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 
 	val sectorLabels = List(1.25, 1.666, 2, 2.333) map (_* math.Pi) zip l map
 	            {case (alpha, label) ⇒ {label_sector(30, 40, alpha.toDouble, label)}}
-
-	<g id="legendWrap" clip-path="url(#legendClip)" transform="translate(0, 600)">
+     val legendWidth = 320
+	val legendHeight = 220
+	<g id="legendWrap" clip-path="url(#legendClip)" transform={"translate(3," + (MAP_DIMENSIONS.y - legendHeight) + ")"}>
 		<rect id="legendRect"
 			x="0" y="0"
-			width="350" height="250"
+			width={legendWidth.toString} height={legendHeight.toString}
 			style="fill: #e0fff0; stroke-width: 3px; stroke: #000050"
 		/>
 		<clipPath id="legendClip">
 			<use xlink:href="#legendRect"/>
 		</clipPath>
-		<g>
-			<text x="50" y="50" font-size="20px">Demand</text>
-			<text x="220" y="50" font-size="20px">Supply</text>
+		<g transform="scale(0.9)">
+			<g>
+				<text x="50" y="40" font-size="20px">Demand</text>
+				<text x="220" y="40" font-size="20px">Supply</text>
+			</g>
+			<g transform ="translate(175, 150)"> {U(demand_side)}{supply_sectors map U}{sectorLabels map U} </g>
 		</g>
-		<g transform ="translate(175, 150)"> {U(demand_side)}{supply_sectors map U}{sectorLabels map U} </g>
 	</g>.convert
 }
 
