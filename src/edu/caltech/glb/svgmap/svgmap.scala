@@ -104,7 +104,7 @@ object Main {def main(args : Array[String]) = {
 	val world_time_per_step : Double= 5 /*min*/ * 60 /*s / min*/
 
 	val dccolors = DataCenterColors("yellow", ("#0A8", "#0F0", "brown"))
-	val dclegend = DataCenterLegendText("total consumption", ("from solar", "from wind", "from grid"))
+	val dclegend = DataCenterLegendText("power demand", ("solar availability", "wind availability", "grid usage"))
 	
 	val line_plot_stats = {
 		val totals0 = dcs(0).stats map {_ ⇒ 0.0}

@@ -208,9 +208,21 @@ Draws a legend identifying the colors used.
 def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem = {
 	val stats : Seq[(String, String)] = (labels.demand +: labels.supplies.asSeq) zip (colors.demand +: colors.supplies.asSeq)
 	val NUM_SUPPLY_SECTORS = colors.supplies.productArity
-	// l is a list of labels.
-	val l = stats map (_._1)
-	val r = 60
+	val r = 40
+	def draw_lineplot_legend(length : Double, height: Double, color : String, labelText : String) : Elem = {
+		val space = 10
+		<g>
+			<line x1 ="0" x2 ={length.toString} y1 ={height.toString} y2 ={height.toString}
+				style={"stroke:" + color + "; stroke-width: 5px;"}>
+			</line>
+			<text x={(length + space).toString} y={(height + 5).toString} font-size="16px">{labelText}</text>
+		</g>.convert
+	}
+	val lineplot_legends = (0 until 4 map { s ⇒ {
+		val length = 50
+		val (label, color) = stats(s)
+		draw_lineplot_legend(length, s*20, color, label)}}
+	  )
 	// Draws a single static sector of the sector chart
 	def draw_sector(start_angle : Double, end_angle : Double, color : String) : Elem = {
 		// Calculate sector's endpoints
@@ -232,24 +244,18 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 			/>.convert
 	}
 
-	//This function draw a line from a sector and label it with the text specified in "label"
+	// This function draw a line from a sector
 	// The line is specified by a start distance from the center, the angle and the length (polar coord)
-	def label_sector(startR : Double, length : Double, theta : Double, label:String) : Elem = {
+	def draw_segment(startR : Double, length : Double, theta : Double) : Elem = {
 		// Translate the end points into cartesian form
 		val endR = startR + length
-		val x1 = startR * math.cos(theta)
-		val y1 = - startR * math.sin(theta)
-		val x2 = endR * math.cos(theta)
-		val y2 = - endR * math.sin(theta)
-		// Position the text (Magic number used.)
-		val label_y = y2 * 1.2 + 5
-		val label_x = x2 + (x2.signum * 120).min(10)
+		val (x1, x2) = (startR, endR) map (_ * math.cos(theta))
+		val (y1, y2) = (-startR, -endR) map (_ * math.sin(theta))
 		// Draw the line and the text.
 		<g>
 			<line x1={"%.1f" format x1} x2={"%.1f" format x2} y1={"%.1f" format y1} y2={"%.1f" format y2}
 			      style="stroke: black; stroke-width: 1.5px;">
 			</line>
-			<text x={"%.1f" format label_x} y={"%.1f" format label_y} font-size="16px">{label}</text>
 		</g>.convert
 	}
      // Draw the sectors
@@ -258,35 +264,70 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 		val (start_angle, end_angle) : (Double, Double) = (1.5, 1.8333) map (_ + 0.333 * s) map (_* math.Pi)
 		draw_sector(start_angle, end_angle, colors.supplies.asSeq(s))
 	}})
-     // Generate the labels
-	val sectorLabels = List(1.25, 1.666, 2, 2.333) map (_* math.Pi) zip l map
-	            {case (alpha, label) ⇒ {label_sector(30, 40, alpha.toDouble, label)}}
-	// Set the legend box size
-     val legendWidth = 320
-	val legendHeight = 220
-	// Display the legend.
-	<g id="legendWrap" clip-path="url(#legendClip)" transform={"translate(3," + (MAP_DIMENSIONS.y - legendHeight) + ")"}>
-		<rect id="legendRect"
-			x="0" y="0"
-			width={legendWidth.toString} height={legendHeight.toString}
-			style="fill: #e0fff0; stroke-width: 3px; stroke: #000050"
+     // Generate the label lines
+	val labelLines = List(1.25, 1.666, 2, 2.333) map (_* math.Pi) map
+	            {case alpha ⇒ {draw_segment(30, 40, alpha.toDouble)}}
+     // Draw the maximum capacity circle.
+	val bounding_circle = <circle
+		cx="0" cy="0" r={(r * 1.2).toString}
+		style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
 		/>
-		<clipPath id="legendClip">
-			<use xlink:href="#legendRect"/>
-		</clipPath>
-		<g transform="scale(0.9)">
-			<g>
-				<text x="50" y="40" font-size="20px">Demand</text>
-				<text x="220" y="40" font-size="20px">Supply</text>
+     val ringLabelLine = draw_segment(r * 1.2, 24, 0.75 * math.Pi)
+	// Set the bottom bound space
+	val space = 110
+	// Set the legend box size
+     val (lineLegendWidth, lineLegendHeight) = (135, 60)
+	val (pieLegendWidth, pieLegendHeight) = (193, 135)
+	// Display the legend.
+	<g>
+		<g id="linePlotLegend" clip-path="url(#lineLegendClip)" transform={"translate(25," + (MAP_DIMENSIONS.y - lineLegendHeight - space) + ")"}>
+			<rect id="lineLegendRect"
+			      x="0" y="0"
+			      width={lineLegendWidth.toString} height={lineLegendHeight.toString}
+			      style="fill: #ffffff; stroke-width: 3px; stroke: #808080"
+			/>
+			<clipPath id="lineLegendClip">
+				<use xlink:href="#lineLegendRect"/>
+			</clipPath>
+			<g transform="scale(0.6)">
+				<g transform ="translate(20, 20)"> {lineplot_legends map U}
+				</g>
 			</g>
-			<g transform ="translate(175, 150)"> {U(demand_side)}{supply_sectors map U}{sectorLabels map U} </g>
+		</g>
+
+		<g id="pieChartLegend" clip-path="url(#pieLegendClip)" transform={"translate(960," + (MAP_DIMENSIONS.y - pieLegendHeight - space) + ")"}>
+			<rect id="pieLegendRect"
+				x="0" y="0"
+				width={pieLegendWidth.toString} height={pieLegendHeight.toString}
+				style="fill: #ffffff; stroke-width: 3px; stroke: #808080"
+			/>
+			<clipPath id="pieLegendClip">
+				<use xlink:href="#pieLegendRect"/>
+			</clipPath>
+			<g transform="scale(0.6)">
+				<g>
+					<text x="160" y="35" text-anchor="middle" font-size="20px">Datacenter Statistics</text>
+					<text x="60" y="180" text-anchor="middle" font-size="16px">power</text>
+					<text x="60" y="200" text-anchor="middle" font-size="16px">demand</text>
+					<text x="60" y="70" text-anchor="middle" font-size="16px">max.</text>
+					<text x="60" y="90" text-anchor="middle" font-size="16px">capacity</text>
+					<text x="240" y="70" text-anchor="middle" font-size="16px">grid usage</text>
+					<text x="255" y="130" text-anchor="middle" font-size="16px">wind</text>
+					<text x="255" y="150" text-anchor="middle" font-size="16px">availability</text>
+					<text x="230" y="190" text-anchor="middle" font-size="16px">solar</text>
+					<text x="230" y="210" text-anchor="middle" font-size="16px">availability</text>
+				</g>
+				<g transform ="translate(150, 130)"> {U(demand_side)}{supply_sectors map U}{labelLines map U}
+					{bounding_circle}{U(ringLabelLine)}
+				</g>
+			</g>
 		</g>
 	</g>.convert
 }
 
 
 /** Height of the entire line plot element */
-val LINE_PLOT_HEIGHT : Int = 100
+val LINE_PLOT_HEIGHT : Int = 80
 /**
 Draws all the statistics on a line plot. The plot has a moving vertical line indicating the current time.
 
@@ -295,17 +336,18 @@ The top 90px is used to display the graph proper. A margin of 10px is reserved f
 */
 def draw_line_plot(stats : Seq[LinePlotStat], anim_time_per_step : Double, numSteps : Int) : Elem = {
 	val AXIS_LABEL_HEIGHT = 10
+	val sideIndent = 25
 	// Top and bottom of main graph region (excluding stuff outside the axes
-	val y_top : Double = MAP_DIMENSIONS.y
+	val y_top : Double = MAP_DIMENSIONS.y - LINE_PLOT_HEIGHT - 10
 	val main_plot_height = LINE_PLOT_HEIGHT - AXIS_LABEL_HEIGHT
-	
-	val x_axis : Elem = <line x1="0" x2={MAP_DIMENSIONS.x.toString} y1={main_plot_height.toString} y2={main_plot_height.toString} stroke="#000" stroke-width="1"/>.convert
+	val line_plot_width = MAP_DIMENSIONS.x - 2 * sideIndent
+	val x_axis : Elem = <line x1="0" x2={line_plot_width.toString} y1={main_plot_height.toString} y2={main_plot_height.toString} stroke="#000" stroke-width="1"/>.convert
 	// Sliding line that indicates the time. We should always use linear calcMode.
 	val current_time_indicator : Elem = <line x1="0" x2="0" y1="0" y2={LINE_PLOT_HEIGHT.toString} stroke="#074" stroke-width="3" opacity="0.7">
 		<animateTransform
 			attributeName="transform" attributeType="XML"
 			type="translate" calcMode="linear"
-			values={"0; %.1f" format MAP_DIMENSIONS.x}
+			values={"0; %.1f" format line_plot_width}
 			dur={animation_duration(anim_time_per_step, numSteps)} fill="freeze"
 		/>
 	</line>.convert
@@ -319,17 +361,17 @@ def draw_line_plot(stats : Seq[LinePlotStat], anim_time_per_step : Double, numSt
 			stroke-width="2px"
 			points={	// Just draw segments
 				stat.vals.zipWithIndex map {case (v, t) ⇒ 
-					val horiz = (t.toDouble / numSteps) * MAP_DIMENSIONS.x
+					val horiz = (t.toDouble / numSteps) * line_plot_width
 					val vert = (1.0 - v) * main_plot_height
 					"%.2f,%.2f" format (horiz, vert)
 				} mkString " "
 			}
 		/>.convert
 	
-	<g id="linePlot" clip-path="url(#linePlotClip)" transform={"translate(0, %.0f)" format y_top}>
+	<g id="linePlot" clip-path="url(#linePlotClip)" transform={"translate(25, %.0f)" format y_top}>
 		<rect id="linePlotRect"
 			x="0" y="0"
-			width={MAP_DIMENSIONS.x.toString} height={LINE_PLOT_HEIGHT.toString}
+			width={line_plot_width.toString} height={LINE_PLOT_HEIGHT.toString}
 			style="fill: #ffffee; stroke-width: 1px; stroke: #005000"
 		/>
 		<clipPath id="linePlotClip">
