@@ -3,6 +3,9 @@ Contains functions that generate an SVG visualization based on input data.
 */
 
 package edu.caltech.glb
+
+import util.control.Exception
+
 package object svgmap extends svgmap.svgmap_types {
 
 import com.codecommit.antixml._
@@ -76,9 +79,12 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 	Thus, when the supply side extends beyond the ring, it indicates that the DC is generating more power than the DC can use under full load (well technically, assuming that it reaches full utilization at some point during the animation).
 	*/
 	val supply_sector_stats = stats map (_.supplies)
+	val demand_sector_stats = stats map (_.demands)
 	val sector_g = <g style="opacity: 0.7;">{
 		val NUM_SUPPLY_SECTORS = supply_sector_stats(0).productArity
 		val SUPPLY_COLORS = colors.supplies
+		val NUM_DEMAND_SECTORS = demand_sector_stats(0).productArity
+		val DEMAND_COLORS = colors.demands
 		/** Radius of a full sector (for value = 1.0) */
 		val r = 30
 		
@@ -124,9 +130,30 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 					dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
 					/>.convert
 		}
-		
-		val demand_side : Elem = draw_sector(0.5 * math.Pi, 1.5 * math.Pi, colors.demand) animate_radius
-			(stats map (_.demand))
+
+		val demand_side : Elem = {
+			val demand_totals = demand_sector_stats map (_.asSeq.sum)
+			/** Fraction of available energy each sector represents */
+			val demand_fracs = demand_sector_stats zip demand_totals map {case (dstats, total) ⇒ dstats map (_ / total)}
+
+			val demand_sectors = (0 until NUM_DEMAND_SECTORS map { d ⇒ {
+				// Each one starts as a semicircle on the left side
+				val (start_angle, end_angle) : (Double, Double) = (0.5, 1.0) map (_ * math.Pi )
+				val unrotated_sector = draw_sector(start_angle, end_angle, DEMAND_COLORS.asSeq(d))
+				// Animate rotating sector to correct position
+				// At each point in time, rotate by the sum of values for sectors (0 until s)
+				val θs : Seq[Double] = demand_fracs map (_.asSeq.slice(0, d).sum)
+				unrotated_sector animate_rotations (θs map (-_ * 180.0/* svg uses degrees */))
+			}})
+			// Clip so that only right side is visible.
+			// Then draw a stroke around the entire semicircle (to create the boundary on the clipped sides).
+			val demand_sector_g = <g>
+				<g clip-path="url(#dcSectorChartDemandSideClip)">{demand_sectors map U}</g>
+				{U(draw_sector(0.5 * math.Pi, 1.5 * math.Pi, "transparent"))}
+			</g>.convert
+			// Scale the sectors as a group
+			demand_sector_g animate_radius demand_totals
+		}
 		
 		val supply_side : Elem = {
 			val supply_totals = supply_sector_stats map (_.asSeq.sum)
@@ -160,7 +187,7 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 		}
 		
 		/** Relative radius of the ring according to the maximum energy demand of this DC. sqrt for equal area.*/
-		val ringSizeFactor = math.sqrt((stats map (_.demand)).max)
+		val ringSizeFactor = math.sqrt((stats map (_.demands.asSeq(1))).max)
 		val bounding_circle = <circle
 			cx="0" cy="0" r={(r * ringSizeFactor).toString}
 			style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
@@ -206,8 +233,9 @@ def draw_line(anim_time_per_step : Double, line : Line) : Group[Node] = {
 Draws a legend identifying the colors used.
 */
 def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem = {
-	val stats : Seq[(String, String)] = (labels.demand +: labels.supplies.asSeq) zip (colors.demand +: colors.supplies.asSeq)
+	val stats : Seq[(String, String)] = (labels.demands.asSeq(1) +: labels.supplies.asSeq) zip (colors.demands.asSeq(1) +: colors.supplies.asSeq)
 	val NUM_SUPPLY_SECTORS = colors.supplies.productArity
+	val NUM_DEMAND_SECTORS = colors.demands.productArity
 	val r = 40
 	def draw_lineplot_legend(length : Double, height: Double, color : String, labelText : String) : Elem = {
 		val space = 10
@@ -259,20 +287,24 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 		</g>.convert
 	}
      // Draw the sectors
-	val demand_side : Elem = draw_sector(0.5 * math.Pi, 1.5 * math.Pi, colors.demand)
+	//val demand_side : Elem = draw_sector(0.5 * math.Pi, 1.5 * math.Pi, colors.demands.asSeq(0))
+     val demand_sectors = (0 until NUM_DEMAND_SECTORS map { d ⇒ {
+	     val (start_angle, end_angle) : (Double, Double) = (0.5, 1.0) map (_ + 0.5 * d) map (_* math.Pi)
+	     draw_sector(start_angle, end_angle, colors.demands.asSeq(d))
+     }})
 	val supply_sectors = (0 until NUM_SUPPLY_SECTORS map { s ⇒ {
 		val (start_angle, end_angle) : (Double, Double) = (1.5, 1.8333) map (_ + 0.333 * s) map (_* math.Pi)
 		draw_sector(start_angle, end_angle, colors.supplies.asSeq(s))
 	}})
      // Generate the label lines
-	val labelLines = List(1.25, 1.666, 2, 2.333) map (_* math.Pi) map
+	val labelLines = List(0.75, 1.25, 1.666, 2, 2.333) map (_* math.Pi) map
 	            {case alpha ⇒ {draw_segment(30, 40, alpha.toDouble)}}
      // Draw the maximum capacity circle.
 	val bounding_circle = <circle
 		cx="0" cy="0" r={(r * 1.2).toString}
 		style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
 		/>
-     val ringLabelLine = draw_segment(r * 1.2, 24, 0.75 * math.Pi)
+     val ringLabelLine = draw_segment(r * 1.2, 24, 1.0 * math.Pi)
 	// Set the bottom bound space
 	val space = 110
 	// Set the legend box size
@@ -307,17 +339,19 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 			<g transform="scale(0.6)">
 				<g>
 					<text x="160" y="35" text-anchor="middle" font-size="20px">Datacenter Statistics</text>
-					<text x="60" y="180" text-anchor="middle" font-size="16px">power</text>
-					<text x="60" y="200" text-anchor="middle" font-size="16px">demand</text>
-					<text x="60" y="70" text-anchor="middle" font-size="16px">max.</text>
-					<text x="60" y="90" text-anchor="middle" font-size="16px">capacity</text>
+					<text x="60" y="180" text-anchor="middle" font-size="16px">cooling</text>
+					<text x="60" y="200" text-anchor="middle" font-size="16px">energy</text>
+					<text x="40" y="125" text-anchor="middle" font-size="16px">max.</text>
+					<text x="40" y="145" text-anchor="middle" font-size="16px">capacity</text>
+					<text x="60" y="70" text-anchor="middle" font-size="16px">power</text>
+					<text x="60" y="90" text-anchor="middle" font-size="16px">demand</text>
 					<text x="240" y="70" text-anchor="middle" font-size="16px">grid usage</text>
 					<text x="255" y="130" text-anchor="middle" font-size="16px">wind</text>
 					<text x="255" y="150" text-anchor="middle" font-size="16px">availability</text>
 					<text x="230" y="190" text-anchor="middle" font-size="16px">solar</text>
 					<text x="230" y="210" text-anchor="middle" font-size="16px">availability</text>
 				</g>
-				<g transform ="translate(150, 130)"> {U(demand_side)}{supply_sectors map U}{labelLines map U}
+				<g transform ="translate(150, 130)"> {demand_sectors map U}{supply_sectors map U}{labelLines map U}
 					{bounding_circle}{U(ringLabelLine)}
 				</g>
 			</g>
