@@ -7,7 +7,6 @@ exec env JAVA_OPTS='-Xss32M' scala -classpath 'anti-xml_2.9.1-0.3.jar' "$0" "$@"
 */
 package edu.caltech.glb.svgmap
 
-import scala.collection.GenSeq
 import org.apache.commons.compress
 import au.com.bytecode.opencsv
 import java.io.InputStreamReader
@@ -32,9 +31,8 @@ object Main {def main(args : Array[String]) = {
 	val dcs : Seq[DataCenter] = {
 		// Create the datacenter location list of WorldPt.
 		val datacenter_location = dc_loc_raw map {case Array(lat, lng) ⇒ WorldPt(lat.toDouble, lng.toDouble)}
-
-
-		datacenter_location.zipWithIndex map {case (dc_loc, dc) ⇒ {
+		
+		datacenter_location.zipWithIndex map {case (dc_loc, dc) ⇒
 			val solar_for_dc = solar map (_(dc))
 			// There are 2 solar readings for each wind reading. For now, double each wind reading to match them:
 			val wind_for_dc = {
@@ -44,46 +42,41 @@ object Main {def main(args : Array[String]) = {
 			}
 			val cooling_for_dc = cooling map (_(dc))
 			val total_for_dc = total map (_(dc))
-			DataCenter(dc_loc, solar_for_dc zip wind_for_dc zip total_for_dc zip cooling_for_dc map
-			  {case (((sstr, wstr), tstr),cstr) ⇒ {
+			DataCenter(dc_loc, solar_for_dc zip wind_for_dc zip total_for_dc zip cooling_for_dc map {case (((sstr, wstr), tstr),cstr) ⇒
 				val (s, w, t, c) : (Double, Double, Double, Double) = (sstr, wstr, tstr, cstr) map (_.toDouble)
 				val max_demand : Double = 4.1335e+05	// scale input data
 				// Clamp negative values to 0.
 				DataCenterState(
-					/* demand */
-				(
-				     /* energy usage for computing */    (t max 0),
-				     /* energy usage for cooling */   (c max 0)
-				) map (_/max_demand),
-				(
-						/* solar */  (s max 0),
-						/* wind */  (w max 0),
+					(	// demand
+						/* energy usage for computing */ (t max 0),
+						/* energy usage for cooling */ (c max 0)
+					) map (_/max_demand),
+					(	// supply
+						/* solar */ (s max 0),
+						/* wind */ (w max 0),
 						/* brown */ (t + c - s - w) max 0
-				) map (_/max_demand),
-				/*The storage data. Now is @@@@*/
-				(t max 0) / max_demand)
-			}})
-		}}
+					) map (_/max_demand),
+					/*The storage data. Now is @@@@*/
+					(t max 0) / max_demand
+				)
+			})
+		}
 	}
 
 	// Create the population center location list of WorldPt
 	val client_locs = state_loc_raw map {case Array(lat, lng) ⇒ WorldPt(lat.toDouble, lng.toDouble)}
 	// Draw 1 line for each (client, dc) pair
 	val lines = {
-		val routing : nc2.Variable = {
+		def load_netcdf(var_name : String) : nc2.Variable = {
 			val infile : io.InputStream = ClassLoader getSystemResourceAsStream ("edu/caltech/glb/svgmap/indata/routing.nc")
-			nc2.NetcdfFile.openInMemory("routing.nc", com.google.common.io.ByteStreams toByteArray infile) findVariable "routingPlan"
+			nc2.NetcdfFile.openInMemory("routing.nc", com.google.common.io.ByteStreams toByteArray infile) findVariable var_name
 		}
+		val routing = load_netcdf("routingPlan")
 		// Population center requests load over time. 48 by 1008
-		val load_raw : nc2.Variable = {
-			val infile : io.InputStream = ClassLoader getSystemResourceAsStream("edu/caltech/glb/svgmap/indata/routing.nc")
-			nc2.NetcdfFile.openInMemory("routing.nc", com.google.common.io.ByteStreams toByteArray infile) findVariable "load"
-		}
+		val load_raw = load_netcdf("load")
 		// The normalized version of load. For line width change purpose.
-		val load_normalized : nc2.Variable = {
-			val infile : io.InputStream = ClassLoader getSystemResourceAsStream("edu/caltech/glb/svgmap/indata/routing.nc")
-			nc2.NetcdfFile.openInMemory("routing.nc", com.google.common.io.ByteStreams toByteArray infile) findVariable "load_normalized"
-		}
+		val load_normalized = load_netcdf("load_normalized")
+		
 		dcs.zipWithIndex flatMap {case (DataCenter(dc_loc, _), dc) ⇒
 			client_locs.zipWithIndex map {case (client_loc, client) ⇒ {
 				// extract a vector section from a multidimensional netCDF array
@@ -126,7 +119,7 @@ object Main {def main(args : Array[String]) = {
 			LinePlotStat(/* Total energy demand of all DCs */"#FFFF00", foldDCs(_.demands match {case (t, c) ⇒ t}) map (_/max_Σ_supply)),
 			LinePlotStat(/* Total brown energy usage of all DCs */"brown", foldDCs(_.supplies match {case (_, _, g) ⇒ g}) map (_/max_Σ_supply)),
 			LinePlotStat(/* Total renewables available over all DCs */"#00FF00", foldDCs(_.supplies match {case (s, w, _) ⇒ s + w}) map (_/max_Σ_supply)),
-		     LinePlotStat(/* Total renewables available over all DCs */"#blue", foldDCs(_.demands match {case (t, c) ⇒ c}) map (_/max_Σ_supply))
+		     LinePlotStat(/* Total renewables available over all DCs */"blue", foldDCs(_.demands match {case (t, c) ⇒ c}) map (_/max_Σ_supply))
 		)
 	}
 	

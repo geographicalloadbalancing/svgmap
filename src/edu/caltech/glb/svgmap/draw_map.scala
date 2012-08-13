@@ -4,8 +4,6 @@ Contains functions that generate an SVG visualization based on input data.
 
 package edu.caltech.glb
 
-import util.control.Exception
-
 package object svgmap extends svgmap.svgmap_types {
 
 import com.codecommit.antixml._
@@ -131,12 +129,12 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 					dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
 					/>.convert
 		}
-
+		
 		val demand_side : Elem = {
 			val demand_totals = demand_sector_stats map (_.asSeq.sum)
 			/** Fraction of available energy each sector represents */
 			val demand_fracs = demand_sector_stats zip demand_totals map {case (dstats, total) ⇒ dstats map (_ / total)}
-
+			
 			val demand_sectors = (0 until NUM_DEMAND_SECTORS map { d ⇒ {
 				// Each one starts as a semicircle on the left side
 				// NEEDS FIX HERE!
@@ -262,17 +260,17 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 
 		// Defines outline of sector
 		val path : String = (
-		  /* center */ "M 0,0" +
-		  /* draw line */ " L " + ("%.4f" format start_x) + "," + ("%.4f" format start_y) +
-		  // Set sweep-flag to 0 (to draw the arc in the standard direction)
-		  /* draw arc */ " A " + r + "," + r + " 0 0 0 " + ("%.4f" format end_x) + "," + ("%.4f" format end_y) +
-		  /* close with line */ " Z"
-		  )
-
-			<path
+			/* center */ "M 0,0" +
+			/* draw line */ " L " + ("%.4f" format start_x) + "," + ("%.4f" format start_y) +
+			// Set sweep-flag to 0 (to draw the arc in the standard direction)
+			/* draw arc */ " A " + r + "," + r + " 0 0 0 " + ("%.4f" format end_x) + "," + ("%.4f" format end_y) +
+			/* close with line */ " Z"
+		)
+		
+		<path
 			d={path}
 			style={"fill: " + color + "; stroke: black; stroke-width: 1px; vector-effect: non-scaling-stroke;"}
-			/>.convert
+		/>.convert
 	}
 
 	// This function draw a line from a sector
@@ -285,24 +283,22 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 		// Draw the line and the text.
 		<g>
 			<line x1={"%.1f" format x1} x2={"%.1f" format x2} y1={"%.1f" format y1} y2={"%.1f" format y2}
-			      style="stroke: black; stroke-width: 1.5px;">
+				style="stroke: black; stroke-width: 1.5px;">
 			</line>
 		</g>.convert
 	}
-     // Draw the sectors
-	//val demand_side : Elem = draw_sector(0.5 * math.Pi, 1.5 * math.Pi, colors.demands.asSeq(0))
-     val demand_sectors = (0 until NUM_DEMAND_SECTORS map { d ⇒ {
-	     val (start_angle, end_angle) : (Double, Double) = (0.5, 1.0) map (_ + 0.5 * d) map (_* math.Pi)
-	     draw_sector(start_angle, end_angle, colors.demands.asSeq(d))
-     }})
+	// Draw the sectors
+	val demand_sectors = (0 until NUM_DEMAND_SECTORS map { d ⇒ {
+		val (start_angle, end_angle) : (Double, Double) = (0.5, 1.0) map (_ + 0.5 * d) map (_* math.Pi)
+		draw_sector(start_angle, end_angle, colors.demands.asSeq(d))
+	}})
 	val supply_sectors = (0 until NUM_SUPPLY_SECTORS map { s ⇒ {
-		val (start_angle, end_angle) : (Double, Double) = (1.5, 1.8333) map (_ + 0.333 * s) map (_* math.Pi)
+		val (start_angle, end_angle) : (Double, Double) = (1.5, 11.0 / 6) map (_ + s / 3.0) map (_* math.Pi)
 		draw_sector(start_angle, end_angle, colors.supplies.asSeq(s))
 	}})
-     // Generate the label lines
-	val labelLines = List(0.75, 1.25, 1.666, 2, 2.333) map (_* math.Pi) map
-	            {case alpha ⇒ {draw_segment(30, 40, alpha.toDouble)}}
-     // Draw the maximum capacity circle.
+	val labelLines = List(0.75, 1.25, 5.0 / 3, 2, 8.0 / 3) map (_* math.Pi) map
+		{case α ⇒ {draw_segment(30, 40, α.toDouble)}}
+	// Draw the maximum capacity circle.
 	val bounding_circle = <circle
 		cx="0" cy="0" r={(r * 1.2).toString}
 		style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
@@ -317,9 +313,9 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 	<g>
 		<g id="linePlotLegend" clip-path="url(#lineLegendClip)" transform={"translate(25," + (MAP_DIMENSIONS.y - lineLegendHeight - space) + ")"}>
 			<rect id="lineLegendRect"
-			      x="0" y="0"
-			      width={lineLegendWidth.toString} height={lineLegendHeight.toString}
-			      style="fill: #ffffff; stroke-width: 3px; stroke: #808080"
+				x="0" y="0"
+				width={lineLegendWidth.toString} height={lineLegendHeight.toString}
+				style="fill: #ffffff; stroke-width: 3px; stroke: #808080"
 			/>
 			<clipPath id="lineLegendClip">
 				<use xlink:href="#lineLegendRect"/>
@@ -329,7 +325,7 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 				</g>
 			</g>
 		</g>
-
+		
 		<g id="pieChartLegend" clip-path="url(#pieLegendClip)" transform={"translate(960," + (MAP_DIMENSIONS.y - pieLegendHeight - space) + ")"}>
 			<rect id="pieLegendRect"
 				x="0" y="0"
