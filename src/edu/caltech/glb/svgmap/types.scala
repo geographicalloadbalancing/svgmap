@@ -31,6 +31,9 @@ implicit def t5mapper[X, X0 <: X, X1 <: X, X2 <:X, X3 <:X, X4 <:X](t: (X0, X1, X
 implicit def t6mapper[X, X0 <: X, X1 <: X, X2 <:X, X3 <:X, X4 <:X, X5 <: X](t: (X0, X1, X2, X3, X4, X5)) = new {
 	def map[R](f: X => R) = (f(t._1), f(t._2), f(t._3), f(t._4), f(t._5), f(t._6))
 }
+implicit def t7mapper[X, X0 <: X, X1 <: X, X2 <:X, X3 <:X, X4 <:X, X5 <: X, X6 <: X](t: (X0, X1, X2, X3, X4, X5, X6)) = new {
+	def map[R](f: X => R) = (f(t._1), f(t._2), f(t._3), f(t._4), f(t._5), f(t._6), f(t._7))
+}
 implicit def t2asSeq[X, X0 <: X, X1 <: X](t: (X0, X1)) = new {
 	def asSeq : Seq[X] = List(t._1, t._2)
 }
@@ -52,7 +55,7 @@ Describes a data center, and encapsulates various statistics for it over time.
 case class DataCenter(coords : WorldPt, stats : Seq[DataCenterState])
 
 /** Represents arbitrary values for each data center statistic. Used to ensure that colors and actual values have the same schema. */  
-case class DataCenterVals[T](demands : (T, T), supplies : (T, T, T))
+case class DataCenterVals[T](demands : (T, T), supplies : (T, T, T), storage : T)
 
 /** Represents the current state of a particular data center. Each statistic should be in [0, 1].
 @param demand the data center's current energy demand

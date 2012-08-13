@@ -80,6 +80,7 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 	*/
 	val supply_sector_stats = stats map (_.supplies)
 	val demand_sector_stats = stats map (_.demands)
+	val storage_stats = stats map (_.storage)
 	val sector_g = <g style="opacity: 0.7;">{
 		val NUM_SUPPLY_SECTORS = supply_sector_stats(0).productArity
 		val SUPPLY_COLORS = colors.supplies
@@ -138,7 +139,8 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 
 			val demand_sectors = (0 until NUM_DEMAND_SECTORS map { d ⇒ {
 				// Each one starts as a semicircle on the left side
-				val (start_angle, end_angle) : (Double, Double) = (0.5, 1.0) map (_ * math.Pi )
+				// NEEDS FIX HERE!
+				val (start_angle, end_angle) : (Double, Double) = (0.5, 1.5) map (_ * math.Pi )
 				val unrotated_sector = draw_sector(start_angle, end_angle, DEMAND_COLORS.asSeq(d))
 				// Animate rotating sector to correct position
 				// At each point in time, rotate by the sum of values for sectors (0 until s)
@@ -187,7 +189,8 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 		}
 		
 		/** Relative radius of the ring according to the maximum energy demand of this DC. sqrt for equal area.*/
-		val ringSizeFactor = math.sqrt((stats map (_.demands.asSeq(1))).max)
+		//val ringSizeFactor = List(2.1492, 0.2904, 0.3007, 2.9052, 0.9096, 4.1335, 1.8180, 0.9586, 0.4119, 0.2023) map
+		val ringSizeFactor = math.sqrt((stats map (_.demands.asSeq.sum)).max)
 		val bounding_circle = <circle
 			cx="0" cy="0" r={(r * ringSizeFactor).toString}
 			style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
@@ -333,12 +336,19 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 				width={pieLegendWidth.toString} height={pieLegendHeight.toString}
 				style="fill: #ffffff; stroke-width: 3px; stroke: #808080"
 			/>
+			<rect id="greyCover"
+				x="0" y="0"
+				width={(pieLegendWidth / 2).toString} height ={pieLegendHeight.toString}
+				style="fill: #808080; opacity : 0.3; stroke-width: 0px; stroke: #808080"
+			/>
 			<clipPath id="pieLegendClip">
 				<use xlink:href="#pieLegendRect"/>
+				<use xlink:href="#greyCover"/>
 			</clipPath>
 			<g transform="scale(0.6)">
 				<g>
-					<text x="160" y="35" text-anchor="middle" font-size="20px">Datacenter Statistics</text>
+					<text x="80" y="35" text-anchor="middle" font-size="20px">Demand</text>
+					<text x="235" y="35" text-anchor="middle" font-size="20px">Supply</text>
 					<text x="60" y="180" text-anchor="middle" font-size="16px">cooling</text>
 					<text x="60" y="200" text-anchor="middle" font-size="16px">energy</text>
 					<text x="40" y="125" text-anchor="middle" font-size="16px">max.</text>
@@ -351,7 +361,7 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 					<text x="230" y="190" text-anchor="middle" font-size="16px">solar</text>
 					<text x="230" y="210" text-anchor="middle" font-size="16px">availability</text>
 				</g>
-				<g transform ="translate(150, 130)"> {demand_sectors map U}{supply_sectors map U}{labelLines map U}
+				<g transform ="translate(162, 130)"> {demand_sectors map U}{supply_sectors map U}{labelLines map U}
 					{bounding_circle}{U(ringLabelLine)}
 				</g>
 			</g>
@@ -377,7 +387,7 @@ def draw_line_plot(stats : Seq[LinePlotStat], anim_time_per_step : Double, numSt
 	val line_plot_width = MAP_DIMENSIONS.x - 2 * sideIndent
 	val x_axis : Elem = <line x1="0" x2={line_plot_width.toString} y1={main_plot_height.toString} y2={main_plot_height.toString} stroke="#000" stroke-width="1"/>.convert
 	// Sliding line that indicates the time. We should always use linear calcMode.
-	val current_time_indicator : Elem = <line x1="0" x2="0" y1="0" y2={LINE_PLOT_HEIGHT.toString} stroke="#074" stroke-width="3" opacity="0.7">
+	val current_time_indicator : Elem = <line x1="0" x2="0" y1="0" y2={LINE_PLOT_HEIGHT.toString} stroke="#808080" stroke-width="3" opacity="0.7">
 		<animateTransform
 			attributeName="transform" attributeType="XML"
 			type="translate" calcMode="linear"
@@ -396,7 +406,7 @@ def draw_line_plot(stats : Seq[LinePlotStat], anim_time_per_step : Double, numSt
 			points={	// Just draw segments
 				stat.vals.zipWithIndex map {case (v, t) ⇒ 
 					val horiz = (t.toDouble / numSteps) * line_plot_width
-					val vert = (1.0 - v) * main_plot_height
+					val vert = (1 - v) * main_plot_height
 					"%.2f,%.2f" format (horiz, vert)
 				} mkString " "
 			}

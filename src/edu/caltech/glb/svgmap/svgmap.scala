@@ -21,12 +21,12 @@ object Main {def main(args : Array[String]) = {
 	// These values are in the latlng form. East and North semisphere are positive.
 	// Read in the traces for solar, wind, and total power demand at each data center.
 	// The values are normalized so that they are each in the same units.
-	val (dc_loc_raw, state_loc_raw, solar, wind, total, cooling) = {
+	val (dc_loc_raw, state_loc_raw, solar, wind, total, cooling, brown) = {
 		def read_file(fname : String) = new opencsv.CSVReader(new InputStreamReader(
 			new compress.compressors.CompressorStreamFactory createCompressorInputStream
 			  (ClassLoader getSystemResourceAsStream ("edu/caltech/glb/svgmap/indata/" + fname))
 		)).readAll.asScala
-		("dc_loc.csv.bz2", "state_loc.csv.bz2", "solar.csv.bz2", "wind.csv.bz2", "total.csv.bz2", "cooling.csv.bz2") map read_file
+		("dc_loc.csv.bz2", "state_loc.csv.bz2", "solar.csv.bz2", "wind.csv.bz2", "total.csv.bz2", "cooling.csv.bz2", "brown.csv.bz2") map read_file
 	}
 
 	val dcs : Seq[DataCenter] = {
@@ -52,14 +52,16 @@ object Main {def main(args : Array[String]) = {
 				DataCenterState(
 					/* demand */
 				(
-				     /* energy usage for computing */    (t max 0)/2,
-				     /* energy usage for cooling */   (c max 0)/2
+				     /* energy usage for computing */    (t max 0),
+				     /* energy usage for cooling */   (c max 0)
 				) map (_/max_demand),
 				(
 						/* solar */  (s max 0),
 						/* wind */  (w max 0),
-						/* brown */ (t - s - w) max 0
-				) map (_/max_demand))
+						/* brown */ (t + c - s - w) max 0
+				) map (_/max_demand),
+				/*The storage data. Now is @@@@*/
+				(t max 0) / max_demand)
 			}})
 		}}
 	}
@@ -108,22 +110,23 @@ object Main {def main(args : Array[String]) = {
 	}
 	
 	val anim_time_per_step : Double = 0.2 /*s*/
-	val world_time_per_step : Double= 5 /*min*/ * 60 /*s / min*/
-
-	val dccolors = DataCenterColors(("yellow", "blue"), ("#0A8", "#0F0", "brown"))
-	val dclegend = DataCenterLegendText(("power demand", "cooling"), ("solar availability", "wind availability", "grid usage"))
+	val world_time_per_step : Double= 10 /*min*/ * 60 /*s / min*/
+	val dccolors = DataCenterColors(("yellow", "blue"), ("#0A8", "#0F0", "brown"), "red")
+	val dclegend = DataCenterLegendText(("power demand", "cooling"), ("solar availability", "wind availability", "grid usage"), "storage")
 	
 	val line_plot_stats = {
 		val totals0 = dcs(0).stats map {_ ⇒ 0.0}
 		// Calculates the sum (or other f) over all DCs, for each time t, returning a list of the totals over time.
 		def foldDCs(stat_selector : DataCenterState ⇒ Double, f : (Double, Double) ⇒ Double = (_+_)) =
 			(totals0 /: dcs){case (totals, dc) ⇒ (totals, dc.stats map stat_selector).zipped map f}
-		val max_Σ_demand : Double = foldDCs(_.demands.asSeq.sum).max
+		// Scale by the max total supply
+		val max_Σ_supply : Double = foldDCs(_.supplies.asSeq.sum).max
 		// Line plot needs to be changed.
 		List(
-			LinePlotStat(/* Total energy demand of all DCs */"#FFFF00", foldDCs(_.demands match {case (t, c) ⇒ t + c}) map (_/max_Σ_demand)),
-			LinePlotStat(/* Total brown energy usage of all DCs */"brown", foldDCs(_.supplies._3) map (_/max_Σ_demand)),
-			LinePlotStat(/* Total renewables available over all DCs */"#00FF00", foldDCs(_.supplies match {case (s, w, _) ⇒ s + w}) map (_/max_Σ_demand))
+			LinePlotStat(/* Total energy demand of all DCs */"#FFFF00", foldDCs(_.demands match {case (t, c) ⇒ t}) map (_/max_Σ_supply)),
+			LinePlotStat(/* Total brown energy usage of all DCs */"brown", foldDCs(_.supplies match {case (_, _, g) ⇒ g}) map (_/max_Σ_supply)),
+			LinePlotStat(/* Total renewables available over all DCs */"#00FF00", foldDCs(_.supplies match {case (s, w, _) ⇒ s + w}) map (_/max_Σ_supply)),
+		     LinePlotStat(/* Total renewables available over all DCs */"#blue", foldDCs(_.demands match {case (t, c) ⇒ c}) map (_/max_Σ_supply))
 		)
 	}
 	
