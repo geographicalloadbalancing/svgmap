@@ -273,13 +273,14 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 		/>.convert
 	}
 
-	// This function draw a line from a sector
-	// The line is specified by a start distance from the center, the angle and the length (polar coord)
-	def draw_segment(startR : Double, length : Double, theta : Double) : Elem = {
+	/** Draws a segment between a sector and its label. 
+	The line is specified by a start distance from the center, the angle, and the length (polar coords).
+	*/
+	def draw_segment(startR : Double, length : Double, θ : Double) : Elem = {
 		// Translate the end points into cartesian form
 		val endR = startR + length
-		val (x1, x2) = (startR, endR) map (_ * math.cos(theta))
-		val (y1, y2) = (-startR, -endR) map (_ * math.sin(theta))
+		val (x1, x2) = (startR, endR) map (_ * math.cos(θ))
+		val (y1, y2) = (-startR, -endR) map (_ * math.sin(θ))
 		// Draw the line and the text.
 		<g>
 			<line x1={"%.1f" format x1} x2={"%.1f" format x2} y1={"%.1f" format y1} y2={"%.1f" format y2}
@@ -288,30 +289,28 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 		</g>.convert
 	}
 	// Draw the sectors
-	val demand_sectors = (0 until NUM_DEMAND_SECTORS map { d ⇒ {
-		val (start_angle, end_angle) = (0.5, 1.0) map (_ + 0.5 * d) map (_* math.Pi) : (Double, Double)
-		draw_sector(start_angle, end_angle, colors.demands.asSeq(d))
-	}})
-	val supply_sectors = (0 until NUM_SUPPLY_SECTORS map { s ⇒ {
+	val demand_sectors = (0 until NUM_DEMAND_SECTORS map { s ⇒
+		val (start_angle, end_angle) = (0.5, 1.0) map (_ + 0.5 * s) map (_* math.Pi) : (Double, Double)
+		draw_sector(start_angle, end_angle, colors.demands.asSeq(s))
+	})
+	val supply_sectors = (0 until NUM_SUPPLY_SECTORS map { s ⇒
 		val (start_angle, end_angle) = (1.5, 11.0 / 6) map (_ + s / 3.0) map (_* math.Pi) : (Double, Double)
 		draw_sector(start_angle, end_angle, colors.supplies.asSeq(s))
-	}})
-	val labelLines = List(0.75, 1.25, 5.0 / 3, 2, 8.0 / 3) map (_* math.Pi) map
-		{case α ⇒ {draw_segment(30, 40, α.toDouble)}}
-	// Draw the maximum capacity circle.
+	})
+	val labelLines = List(-1.0/3, 0, 1.0/3, -0.75, 0.75) map (_* math.Pi) map {case α ⇒ draw_segment(30, 40, α)}
+	// Draw the maximum-capacity circle
 	val bounding_circle = <circle
 		cx="0" cy="0" r={(r * 1.2).toString}
 		style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
 		/>
-     val ringLabelLine = draw_segment(r * 1.2, 24, 1.0 * math.Pi)
-	// Set the bottom bound space
-	val space = 110
-	// Set the legend box size
-     val (lineLegendWidth, lineLegendHeight) = (135, 60)
+	val ringLabelLine = draw_segment(r * 1.2, 24, 1.0 * math.Pi)
+	val bottom_bound_space = 110
+	// Legend box sizes
+	val (lineLegendWidth, lineLegendHeight) = (135, 60)
 	val (pieLegendWidth, pieLegendHeight) = (193, 135)
 	// Display the legend.
 	<g>
-		<g id="linePlotLegend" clip-path="url(#lineLegendClip)" transform={"translate(25," + (MAP_DIMENSIONS.y - lineLegendHeight - space) + ")"}>
+		<g id="linePlotLegend" clip-path="url(#lineLegendClip)" transform={"translate(25," + (MAP_DIMENSIONS.y - lineLegendHeight - bottom_bound_space) + ")"}>
 			<rect id="lineLegendRect"
 				x="0" y="0"
 				width={lineLegendWidth.toString} height={lineLegendHeight.toString}
@@ -326,7 +325,7 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 			</g>
 		</g>
 		
-		<g id="pieChartLegend" clip-path="url(#pieLegendClip)" transform={"translate(960," + (MAP_DIMENSIONS.y - pieLegendHeight - space) + ")"}>
+		<g id="pieChartLegend" clip-path="url(#pieLegendClip)" transform={"translate(960," + (MAP_DIMENSIONS.y - pieLegendHeight - bottom_bound_space) + ")"}>
 			<rect id="pieLegendRect"
 				x="0" y="0"
 				width={pieLegendWidth.toString} height={pieLegendHeight.toString}
