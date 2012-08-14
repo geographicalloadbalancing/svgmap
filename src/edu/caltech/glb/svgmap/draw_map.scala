@@ -368,21 +368,21 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 
 /** Height of the entire line plot element */
 val LINE_PLOT_HEIGHT : Int = 80
+/** Distance the bottom and sides of the line plot are offset from the edges of the image */ 
+val LINE_PLOT_MARGIN : Int = 10
 /**
 Draws all the statistics on a line plot. The plot has a moving vertical line indicating the current time.
 
-The top 90px is used to display the graph proper. A margin of 10px is reserved for time-axis labels.
+The top (LINE_PLOT_HEIGHT - AXIS_LABEL_HEIGHT)px is used to display the graph proper.
+A margin of (AXIS_LABEL_HEIGHT)px is reserved for displaying time-axis labels.
 @param numSteps the number of data points to draw for each statistic (should equal the number of steps in the animation).
 */
 def draw_line_plot(stats : Seq[LinePlotStat], anim_time_per_step : Double, numSteps : Int) : Elem = {
 	val AXIS_LABEL_HEIGHT = 10
-	val sideIndent = 25
-	// Top and bottom of main graph region (excluding stuff outside the axes
-	val y_top : Double = MAP_DIMENSIONS.y - LINE_PLOT_HEIGHT - 10
 	val main_plot_height = LINE_PLOT_HEIGHT - AXIS_LABEL_HEIGHT
-	val line_plot_width = MAP_DIMENSIONS.x - 2 * sideIndent
+	val line_plot_width = MAP_DIMENSIONS.x - 2 * LINE_PLOT_MARGIN
 	val x_axis : Elem = <line x1="0" x2={line_plot_width.toString} y1={main_plot_height.toString} y2={main_plot_height.toString} stroke="#000" stroke-width="1"/>.convert
-	// Sliding line that indicates the time. We should always use linear calcMode.
+	// Sliding line that indicates the time. We should always use linear calcMode, regardless of the setting of CALC_MODE.
 	val current_time_indicator : Elem = <line x1="0" x2="0" y1="0" y2={LINE_PLOT_HEIGHT.toString} stroke="#808080" stroke-width="3" opacity="0.7">
 		<animateTransform
 			attributeName="transform" attributeType="XML"
@@ -408,7 +408,9 @@ def draw_line_plot(stats : Seq[LinePlotStat], anim_time_per_step : Double, numSt
 			}
 		/>.convert
 	
-	<g id="linePlot" clip-path="url(#linePlotClip)" transform={"translate(25, %.0f)" format y_top}>
+	// Top and bottom of main graph region (excluding stuff outside the axes)
+	val y_top : Double = MAP_DIMENSIONS.y - LINE_PLOT_HEIGHT - LINE_PLOT_MARGIN
+	<g id="linePlot" clip-path="url(#linePlotClip)" transform={"translate(%d, %.0f)" format (LINE_PLOT_MARGIN, y_top)}>
 		<rect id="linePlotRect"
 			x="0" y="0"
 			width={line_plot_width.toString} height={LINE_PLOT_HEIGHT.toString}
@@ -455,8 +457,6 @@ def generate_visualization(anim_time_per_step : Double, world_time_per_step : Do
 		// Zipper.unselect has unnecessarily restrictive type. Work around by casting. (Cheat, but seems to work)
 		map_with_updated_metadata_elem.asInstanceOf[Elem]
 	}
-	// Expand viewport to include the graph of system stats
-	doc = doc.withAttribute("viewBox", "0 0 %d %d".format(MAP_DIMENSIONS.x.round, MAP_DIMENSIONS.y.round + LINE_PLOT_HEIGHT))
 	doc = doc addChild draw_line_plot(line_plot_stats, anim_time_per_step, num_steps)
 	
 	val overlay = <g id="overlay">
