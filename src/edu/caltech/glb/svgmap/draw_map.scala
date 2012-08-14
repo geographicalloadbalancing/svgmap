@@ -138,7 +138,7 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 			val demand_sectors = (0 until NUM_DEMAND_SECTORS map { d ⇒ {
 				// Each one starts as a semicircle on the left side
 				// NEEDS FIX HERE!
-				val (start_angle, end_angle) : (Double, Double) = (0.5, 1.5) map (_ * math.Pi )
+				val (start_angle, end_angle) = (0.5, 1.5) map (_ * math.Pi ) : (Double, Double)
 				val unrotated_sector = draw_sector(start_angle, end_angle, DEMAND_COLORS.asSeq(d))
 				// Animate rotating sector to correct position
 				// At each point in time, rotate by the sum of values for sectors (0 until s)
@@ -168,7 +168,7 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 				Then use clipping so that only the real chart (right half) displays.
 				*/
 				// Each one starts as a semicircle on the right side
-				val (start_angle, end_angle) : (Double, Double) = (-0.5, 0.5) map (_ * math.Pi )
+				val (start_angle, end_angle) = (-0.5, 0.5) map (_ * math.Pi ) : (Double, Double)
 				
 				val unrotated_sector = draw_sector(start_angle, end_angle, SUPPLY_COLORS.asSeq(s))
 				// Animate rotating sector to correct position
@@ -289,11 +289,11 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 	}
 	// Draw the sectors
 	val demand_sectors = (0 until NUM_DEMAND_SECTORS map { d ⇒ {
-		val (start_angle, end_angle) : (Double, Double) = (0.5, 1.0) map (_ + 0.5 * d) map (_* math.Pi)
+		val (start_angle, end_angle) = (0.5, 1.0) map (_ + 0.5 * d) map (_* math.Pi) : (Double, Double)
 		draw_sector(start_angle, end_angle, colors.demands.asSeq(d))
 	}})
 	val supply_sectors = (0 until NUM_SUPPLY_SECTORS map { s ⇒ {
-		val (start_angle, end_angle) : (Double, Double) = (1.5, 11.0 / 6) map (_ + s / 3.0) map (_* math.Pi)
+		val (start_angle, end_angle) = (1.5, 11.0 / 6) map (_ + s / 3.0) map (_* math.Pi) : (Double, Double)
 		draw_sector(start_angle, end_angle, colors.supplies.asSeq(s))
 	}})
 	val labelLines = List(0.75, 1.25, 5.0 / 3, 2, 8.0 / 3) map (_* math.Pi) map

@@ -43,7 +43,7 @@ object Main {def main(args : Array[String]) = {
 			val cooling_for_dc = cooling map (_(dc))
 			val total_for_dc = total map (_(dc))
 			DataCenter(dc_loc, solar_for_dc zip wind_for_dc zip total_for_dc zip cooling_for_dc map {case (((sstr, wstr), tstr),cstr) ⇒
-				val (s, w, t, c) : (Double, Double, Double, Double) = (sstr, wstr, tstr, cstr) map (_.toDouble)
+				val (s, w, t, c) = (sstr, wstr, tstr, cstr) map (_.toDouble) : (Double, Double, Double, Double)
 				val max_demand : Double = 4.1335e+05	// scale input data
 				// Clamp negative values to 0.
 				DataCenterState(
