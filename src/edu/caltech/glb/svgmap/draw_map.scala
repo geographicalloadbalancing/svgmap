@@ -304,13 +304,13 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 		style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
 		/>
 	val ringLabelLine = draw_segment(r * 1.2, 24, 1.0 * math.Pi)
-	val bottom_bound_space = 110
+	val legends_bottom_margin = LINE_PLOT_MARGIN * 2 + LINE_PLOT_HEIGHT
 	// Legend box sizes
 	val (lineLegendWidth, lineLegendHeight) = (135, 60)
 	val (pieLegendWidth, pieLegendHeight) = (193, 135)
 	// Display the legend.
 	<g>
-		<g id="linePlotLegend" clip-path="url(#lineLegendClip)" transform={"translate(25," + (MAP_DIMENSIONS.y - lineLegendHeight - bottom_bound_space) + ")"}>
+		<g id="linePlotLegend" clip-path="url(#lineLegendClip)" transform={"translate(%d, %.1f)" format (LINE_PLOT_MARGIN, MAP_DIMENSIONS.y - lineLegendHeight - legends_bottom_margin)}>
 			<rect id="lineLegendRect"
 				x="0" y="0"
 				width={lineLegendWidth.toString} height={lineLegendHeight.toString}
@@ -325,38 +325,38 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 			</g>
 		</g>
 		
-		<g id="pieChartLegend" clip-path="url(#pieLegendClip)" transform={"translate(960," + (MAP_DIMENSIONS.y - pieLegendHeight - bottom_bound_space) + ")"}>
+		<g id="pieChartLegend" clip-path="url(#pieLegendClip)" transform={"translate(%.1f, %.1f)" format (MAP_DIMENSIONS.x - (pieLegendWidth/2.0) - LINE_PLOT_MARGIN, MAP_DIMENSIONS.y - pieLegendHeight - legends_bottom_margin)}>
 			<rect id="pieLegendRect"
-				x="0" y="0"
+				x={"%.1f" format (-pieLegendWidth / 2.0)} y="0"
 				width={pieLegendWidth.toString} height={pieLegendHeight.toString}
 				style="fill: #ffffff; stroke-width: 3px; stroke: #808080"
 			/>
-			<rect id="greyCover"
-				x="0" y="0"
-				width={(pieLegendWidth / 2).toString} height ={pieLegendHeight.toString}
-				style="fill: #808080; opacity : 0.3; stroke-width: 0px; stroke: #808080"
+			<rect id="pieLegendDemandShade"
+				x="-1000" y="-1000"
+				width="1000" height ="2000"
+				style="fill: #808080; opacity : 0.3; stroke-width: 0px"
 			/>
 			<clipPath id="pieLegendClip">
 				<use xlink:href="#pieLegendRect"/>
-				<use xlink:href="#greyCover"/>
 			</clipPath>
 			<g transform="scale(0.6)">
 				<g>
-					<text x="80" y="35" text-anchor="middle" font-size="20px">Demand</text>
-					<text x="235" y="35" text-anchor="middle" font-size="20px">Supply</text>
-					<text x="60" y="180" text-anchor="middle" font-size="16px">cooling</text>
-					<text x="60" y="200" text-anchor="middle" font-size="16px">energy</text>
-					<text x="40" y="125" text-anchor="middle" font-size="16px">max.</text>
-					<text x="40" y="145" text-anchor="middle" font-size="16px">capacity</text>
-					<text x="60" y="70" text-anchor="middle" font-size="16px">power</text>
-					<text x="60" y="90" text-anchor="middle" font-size="16px">demand</text>
-					<text x="240" y="70" text-anchor="middle" font-size="16px">grid usage</text>
-					<text x="255" y="130" text-anchor="middle" font-size="16px">wind</text>
-					<text x="255" y="150" text-anchor="middle" font-size="16px">availability</text>
-					<text x="230" y="190" text-anchor="middle" font-size="16px">solar</text>
-					<text x="230" y="210" text-anchor="middle" font-size="16px">availability</text>
+					<text x={"%.1f" format (-pieLegendWidth / 4.0)} y="35" text-anchor="middle" font-size="20px">Demand</text>
+					<text x={"%.1f" format (pieLegendWidth / 4.0)} y="35" text-anchor="middle" font-size="20px">Supply</text>
+					<text x="-100" y="180" text-anchor="middle" font-size="16px">cooling</text>
+					<text x="-100" y="200" text-anchor="middle" font-size="16px">energy</text>
+					<text x="-120" y="125" text-anchor="middle" font-size="16px">max.</text>
+					<text x="-120" y="145" text-anchor="middle" font-size="16px">capacity</text>
+					<text x="-100" y="70" text-anchor="middle" font-size="16px">power</text>
+					<text x="-100" y="90" text-anchor="middle" font-size="16px">demand</text>
+					<text x="80" y="70" text-anchor="middle" font-size="16px">grid usage</text>
+					<text x="95" y="130" text-anchor="middle" font-size="16px">wind</text>
+					<text x="95" y="150" text-anchor="middle" font-size="16px">availability</text>
+					<text x="70" y="190" text-anchor="middle" font-size="16px">solar</text>
+					<text x="70" y="210" text-anchor="middle" font-size="16px">availability</text>
 				</g>
-				<g transform ="translate(162, 130)"> {demand_sectors map U}{supply_sectors map U}{labelLines map U}
+				<g transform={"translate(0, 130)"}>
+					{demand_sectors map U}{supply_sectors map U}{labelLines map U}
 					{bounding_circle}{U(ringLabelLine)}
 				</g>
 			</g>
