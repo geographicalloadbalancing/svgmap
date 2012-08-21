@@ -67,15 +67,15 @@ object Main {def main(args : Array[String]) = {
 	val client_locs = state_loc_raw map {case Array(lat, lng) ⇒ WorldPt(lat.toDouble, lng.toDouble)}
 	// Draw 1 line for each (client, dc) pair
 	val lines = {
-		def load_netcdf(var_name : String) : nc2.Variable = {
+		val netcdf_data = {
 			val infile : io.InputStream = ClassLoader getSystemResourceAsStream ("edu/caltech/glb/svgmap/indata/routing.nc")
-			nc2.NetcdfFile.openInMemory("routing.nc", com.google.common.io.ByteStreams toByteArray infile) findVariable var_name
+			nc2.NetcdfFile.openInMemory("routing.nc", com.google.common.io.ByteStreams toByteArray infile)
 		}
-		val routing = load_netcdf("routingPlan")
+		val routing = netcdf_data findVariable "routingPlan"
 		// Population center requests load over time. 48 by 1008
-		val load_raw = load_netcdf("load")
+		val load_raw = netcdf_data findVariable "load"
 		// The normalized version of load. For line width change purpose.
-		val load_normalized = load_netcdf("load_normalized")
+		val load_normalized = netcdf_data findVariable "load_normalized"
 		
 		dcs.zipWithIndex flatMap {case (DataCenter(dc_loc, _), dc) ⇒
 			client_locs.zipWithIndex map {case (client_loc, client) ⇒ {
