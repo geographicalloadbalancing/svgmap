@@ -38,11 +38,22 @@ private[this] implicit def transformWorldPt(pt : WorldPt) = new {
 	}
 }
 
+/** Formatters to format a double into a format usable in SVG (scientific notation disabled, don't write many unnecessary decimal places).
+
+This is needed for performance: `"%.2f" format _` is very slow; DecimalFormat is almost as fast as toString.
+(Can't use toString because it sometimes outputs scientific notation, which isn't allowed in SVG, and it gives unnecessarily many decimal places.)
+*/
+private val num_formats = {
+	val locale = new java.text.DecimalFormatSymbols(java.util.Locale.ROOT)
+	def make_formatter(fmt_string : String)(num : Double) : String = new java.text.DecimalFormat(fmt_string, locale) format num
+	("#.#", "#.##", "#.###", "#.####") map make_formatter
+}
+
 /**
 The total time the animation should run, if there are <var>n</var> time steps to display.
  @return the total time, as a string that can be inserted into the SVG
 */
-private def animation_duration(anim_time_per_step : Double, n : Int) : String = "%.4fs" format (anim_time_per_step * n)
+private def animation_duration(anim_time_per_step : Double, n : Int) : String = num_formats._4(anim_time_per_step * n) + "s"
 
 /** Method to use for animation. (For example, "linear" ⇒ smoothly interpolate between data points; "discrete" ⇒ jump) */
 val CALC_MODE = "linear"
@@ -53,7 +64,7 @@ Draws a small dot indicating the exact location of some object.
 */
 def draw_dot(coords : WorldPt) : scala.xml.Elem = {
 	val DevicePt(x, y) = coords.toDevicePt
-	<circle cx={"%.4f" format x} cy={"%.4f" format y} r="2" style="fill:rgb(0,0,0)" />
+	<circle cx={num_formats._4(x)} cy={num_formats._4(y)} r="2" style="fill:rgb(0,0,0)" />
 }
 
 /** Draws an animated data center indicator at the specified coordinates, displaying the given stats over time.
@@ -96,9 +107,9 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 			// Defines outline of sector
 			val path : String = (
 				/* center */ "M 0,0" +
-				/* draw line */ " L " + ("%.4f" format start_x) + "," + ("%.4f" format start_y) +
+				/* draw line */ " L " + num_formats._4(start_x) + "," + num_formats._4(start_y) +
 				// Set sweep-flag to 0 (to draw the arc in the standard direction)
-				/* draw arc */ " A " + r + "," + r + " 0 0 0 " + ("%.4f" format end_x) + "," + ("%.4f" format end_y) +
+				/* draw arc */ " A " + r + "," + r + " 0 0 0 " + num_formats._4(end_x) + "," + num_formats._4(end_y) +
 				/* close with line */ " Z"
 			)
 			
@@ -115,7 +126,7 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 				shape addChild <animateTransform
 					attributeName="transform" attributeType="XML"
 					type="scale" calcMode={CALC_MODE}
-					values={areas map {"%.2f" format math.sqrt(_)} mkString ";"}
+					values={areas map math.sqrt map num_formats._2 mkString ";"}
 					dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
 				/>.convert
 		}
@@ -125,7 +136,7 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 				shape addChild <animateTransform
 					attributeName="transform" attributeType="XML"
 					type="rotate" calcMode={CALC_MODE}
-					values={angles_deg map {"%.2f" format _} mkString ";"}
+					values={angles_deg map num_formats._2 mkString ";"}
 					dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
 					/>.convert
 		}
@@ -196,7 +207,7 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 	}
 	
 	// Translate everything to the desired data center location
-	<g transform={"translate(" + ("%.1f" format x) + "," + ("%.1f" format y) + ")"}/>.convert addChild sector_g
+	<g transform={"translate(" + num_formats._1(x) + "," + num_formats._1(y) + ")"}/>.convert addChild sector_g
 }
 
 /**
@@ -209,18 +220,18 @@ def draw_line(anim_time_per_step : Double, line : Line) : scala.xml.Elem = {
 	val dp2 = p2.toDevicePt
 	<g>
 		{draw_dot(p1)}
-		<line x1={"%.1f" format dp1.x} x2={"%.1f" format dp2.x} y1={"%.1f" format dp1.y} y2={"%.1f" format dp2.y}
+		<line x1={num_formats._1(dp1.x)} x2={num_formats._1(dp2.x)} y1={num_formats._1(dp1.y)} y2={num_formats._1(dp2.y)}
 			 style="stroke: hsl(0, 0%, 50%); stroke-width: 10px;">
 			<animate
 				attributeName="opacity"
 				calcMode={CALC_MODE}
-				values={stats map {"%.2f" format _.opacity} mkString ";"}
+				values={stats map (_.opacity) map num_formats._2 mkString ";"}
 				dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
 			/>
 			<animate
 				attributeName="stroke-width"
 				calcMode={CALC_MODE}
-				values={stats map {"%.4f" format _.width} mkString ";"}
+				values={stats map (_.width) map num_formats._4 mkString ";"}
 				dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
 			/>
 		</line>
@@ -258,9 +269,9 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 		// Defines outline of sector
 		val path : String = (
 			/* center */ "M 0,0" +
-			/* draw line */ " L " + ("%.4f" format start_x) + "," + ("%.4f" format start_y) +
+			/* draw line */ " L " + num_formats._4(start_x) + "," + num_formats._4(start_y) +
 			// Set sweep-flag to 0 (to draw the arc in the standard direction)
-			/* draw arc */ " A " + r + "," + r + " 0 0 0 " + ("%.4f" format end_x) + "," + ("%.4f" format end_y) +
+			/* draw arc */ " A " + r + "," + r + " 0 0 0 " + num_formats._4(end_x) + "," + num_formats._4(end_y) +
 			/* close with line */ " Z"
 		)
 		
@@ -399,7 +410,7 @@ def draw_line_plot(stats : Seq[LinePlotStat], anim_time_per_step : Double, numSt
 				stat.vals.zipWithIndex map {case (v, t) ⇒ 
 					val horiz = (t.toDouble / numSteps) * line_plot_width
 					val vert = (1 - v) * main_plot_height
-					"%.2f,%.2f" format (horiz, vert)
+					num_formats._2(horiz) + "," + num_formats._2(vert)
 				} mkString " "
 			}
 		/>.convert
@@ -444,7 +455,7 @@ def generate_visualization(anim_time_per_step : Double, world_time_per_step : Do
 	val timing_metadata : Elem = <timing id="timing" xmlns="http://rsrg.cms.caltech.edu/xml/2012/timing"
 		numSteps={num_steps.toString}
 		timelapseFactor={"%f" format timelapse_factor}
-		duration={"%.4f" format (num_steps * anim_time_per_step)}
+		duration={num_formats._4(num_steps * anim_time_per_step)}
 	/>.convert
 	
 	var doc : Elem = {
