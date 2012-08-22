@@ -195,6 +195,27 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 			supply_sector_g animate_radius supply_totals
 		}
 		
+		val battery : Elem = {
+			val battery_height : Double = 50.0 // @@@@@ TODO: read from BACKGROUND_MAP
+			
+			// Draw where the base of the battery is at (0, 0) and the battery extends down with increasing y, to (0, battery_height)
+			<g transform={"translate(0," + num_formats._1(-battery_height / 2) + ")"}>
+				<use xlink:href="#dcSectorChartBatteryOutline" style="fill: #fff"/>
+				<g clip-path="url(#dcSectorChartBatteryClip)">
+					<rect x="-3" width="6" y="0" height={num_formats._1(battery_height)}
+						fill={colors.storage} stroke="black" stroke-width="1">
+						<animate
+							attributeName="y"
+							calcMode={CALC_MODE}
+							values={storage_stats map (1 - _) map (_ * battery_height) map num_formats._2 mkString ";"}
+							dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
+						/>
+					</rect>
+				</g>
+				<use xlink:href="#dcSectorChartBatteryOutline" style="fill: none; stroke: #000; stroke-width: 1px;"/>
+			</g>.convert
+		}
+		
 		/** Relative radius of the ring according to the maximum energy demand of this DC. sqrt for equal area.*/
 		//val ringSizeFactor = List(2.1492, 0.2904, 0.3007, 2.9052, 0.9096, 4.1335, 1.8180, 0.9586, 0.4119, 0.2023) map
 		val ringSizeFactor = math.sqrt((stats map (_.demands.asSeq.sum)).max)
@@ -203,7 +224,7 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 			style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
 		/>.convert
 		
-		<g style="opacity: 0.7;"/>.convert addChildren Group(demand_side, supply_side, bounding_circle)
+		<g style="opacity: 0.7;"/>.convert addChildren Group(demand_side, supply_side, bounding_circle, battery)
 	}
 	
 	// Translate everything to the desired data center location

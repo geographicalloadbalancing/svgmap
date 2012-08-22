@@ -20,12 +20,12 @@ object Main {def main(args : Array[String]) = {
 	// These values are in the latlng form. East and North semisphere are positive.
 	// Read in the traces for solar, wind, and total power demand at each data center.
 	// The values are normalized so that they are each in the same units.
-	val (dc_loc_raw, state_loc_raw, solar, wind, total, cooling, brown) = {
+	val (dc_loc_raw, state_loc_raw, solar, wind, total, cooling, brown, battery) = {
 		def read_file(fname : String) = new opencsv.CSVReader(new InputStreamReader(
 			new compress.compressors.CompressorStreamFactory createCompressorInputStream
 			  (ClassLoader getSystemResourceAsStream ("edu/caltech/glb/svgmap/indata/" + fname))
 		)).readAll.asScala
-		("dc_loc.csv.bz2", "state_loc.csv.bz2", "solar.csv.bz2", "wind.csv.bz2", "total.csv.bz2", "cooling.csv.bz2", "brown.csv.bz2") map read_file
+		("dc_loc.csv.bz2", "state_loc.csv.bz2", "solar.csv.bz2", "wind.csv.bz2", "total.csv.bz2", "cooling.csv.bz2", "brown.csv.bz2", "battery.csv.bz2") map read_file
 	}
 
 	val dcs : Seq[DataCenter] = {
@@ -42,8 +42,9 @@ object Main {def main(args : Array[String]) = {
 			}
 			val cooling_for_dc = cooling map (_(dc))
 			val total_for_dc = total map (_(dc))
-			DataCenter(dc_loc, solar_for_dc zip wind_for_dc zip total_for_dc zip cooling_for_dc map {case (((sstr, wstr), tstr),cstr) ⇒
-				val (s, w, t, c) = (sstr, wstr, tstr, cstr) map (_.toDouble) : (Double, Double, Double, Double)
+			val battery_for_dc = battery map (_(dc))
+			DataCenter(dc_loc, (solar_for_dc zip wind_for_dc zip total_for_dc zip cooling_for_dc zip battery_for_dc) map {case ((((sstr, wstr), tstr), cstr), bstr) ⇒
+				val (s, w, t, c, b) = (sstr, wstr, tstr, cstr, bstr) map (_.toDouble) : (Double, Double, Double, Double, Double)
 				val max_demand : Double = 4.1335e+05	// scale input data
 				// Clamp negative values to 0.
 				DataCenterState(
@@ -56,8 +57,7 @@ object Main {def main(args : Array[String]) = {
 						/* wind */ (w max 0),
 						/* brown */ (t + c - s - w) max 0
 					) map (_/max_demand),
-					/*The storage data. Now is @@@@*/
-					(t max 0) / max_demand
+					b max 0 // battery
 				)
 			})
 		}
