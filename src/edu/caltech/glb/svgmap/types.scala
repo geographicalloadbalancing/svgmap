@@ -34,6 +34,9 @@ implicit def t6mapper[X, X0 <: X, X1 <: X, X2 <:X, X3 <:X, X4 <:X, X5 <: X](t: (
 implicit def t7mapper[X, X0 <: X, X1 <: X, X2 <:X, X3 <:X, X4 <:X, X5 <: X, X6 <: X](t: (X0, X1, X2, X3, X4, X5, X6)) = new {
 	def map[R](f: X => R) = (f(t._1), f(t._2), f(t._3), f(t._4), f(t._5), f(t._6), f(t._7))
 }
+implicit def t8mapper[X, X0 <: X, X1 <: X, X2 <:X, X3 <:X, X4 <:X, X5 <: X, X6 <: X, X7 <: X](t: (X0, X1, X2, X3, X4, X5, X6, X7)) = new {
+	def map[R](f: X => R) = (f(t._1), f(t._2), f(t._3), f(t._4), f(t._5), f(t._6), f(t._7), f(t._8))
+}
 implicit def t2asSeq[X, X0 <: X, X1 <: X](t: (X0, X1)) = new {
 	def asSeq : Seq[X] = List(t._1, t._2)
 }

@@ -45,8 +45,11 @@ Wikipedia specifies how to map (lat, long) coordinates onto this image: http://e
 		<rect x="0" y="-1000" width="1000" height="2000"/>
 	</clipPath>
 	<clipPath id="dcSectorChartDemandSideClip">
-     	<rect x="-1000" y="-1000" width="1000" height="2000"/>
-     </clipPath>
+		<rect x="-1000" y="-1000" width="1000" height="2000"/>
+	</clipPath>
+	<clipPath id="dcSectorChartBatteryClip">
+		<rect id="dcSectorChartBatteryOutline" x="-3" y="0" width="6" height="50"/>
+	</clipPath>
 	<rect id="legendColorSquare" x="4" y="0" width="16" height="16" stroke="#000"/>
 </defs>
 <g clip-path="url(#mainMapClip)" id="mainMap">

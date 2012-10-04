@@ -38,11 +38,22 @@ private[this] implicit def transformWorldPt(pt : WorldPt) = new {
 	}
 }
 
+/** Formatters to format a double into a format usable in SVG (scientific notation disabled, don't write many unnecessary decimal places).
+
+This is needed for performance: `"%.2f" format _` is very slow; DecimalFormat is almost as fast as toString.
+(Can't use toString because it sometimes outputs scientific notation, which isn't allowed in SVG, and it gives unnecessarily many decimal places.)
+*/
+private val num_formats = {
+	val locale = new java.text.DecimalFormatSymbols(java.util.Locale.ROOT)
+	def make_formatter(fmt_string : String)(num : Double) : String = new java.text.DecimalFormat(fmt_string, locale) format num
+	("#.#", "#.##", "#.###", "#.####") map make_formatter
+}
+
 /**
 The total time the animation should run, if there are <var>n</var> time steps to display.
  @return the total time, as a string that can be inserted into the SVG
 */
-private def animation_duration(anim_time_per_step : Double, n : Int) : String = "%.4fs" format (anim_time_per_step * n)
+private def animation_duration(anim_time_per_step : Double, n : Int) : String = num_formats._4(anim_time_per_step * n) + "s"
 
 /** Method to use for animation. (For example, "linear" ⇒ smoothly interpolate between data points; "discrete" ⇒ jump) */
 val CALC_MODE = "linear"
@@ -51,14 +62,14 @@ val CALC_MODE = "linear"
 Draws a small dot indicating the exact location of some object.
 @param coords the coordinates of the dot to draw
 */
-def draw_dot(coords : WorldPt) : Elem = {
+def draw_dot(coords : WorldPt) : scala.xml.Elem = {
 	val DevicePt(x, y) = coords.toDevicePt
-	<circle cx={"%.4f" format x} cy={"%.4f" format y} r="2" style="fill:rgb(0,0,0)" />.convert
+	<circle cx={num_formats._4(x)} cy={num_formats._4(y)} r="2" style="fill:rgb(0,0,0)" />
 }
 
 /** Draws an animated data center indicator at the specified coordinates, displaying the given stats over time.
 @return an SVG fragment to be inserted into the SVG document. */
-def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataCenterColors) : Group[Node] = {
+def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataCenterColors) : Elem = {
 	val DataCenter(coords, stats) = dc
 	val DevicePt(x, y) = coords.toDevicePt
 	
@@ -79,7 +90,7 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 	val supply_sector_stats = stats map (_.supplies)
 	val demand_sector_stats = stats map (_.demands)
 	val storage_stats = stats map (_.storage)
-	val sector_g = <g style="opacity: 0.7;">{
+	val sector_g : Elem = {
 		val NUM_SUPPLY_SECTORS = supply_sector_stats(0).productArity
 		val SUPPLY_COLORS = colors.supplies
 		val NUM_DEMAND_SECTORS = demand_sector_stats(0).productArity
@@ -96,9 +107,9 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 			// Defines outline of sector
 			val path : String = (
 				/* center */ "M 0,0" +
-				/* draw line */ " L " + ("%.4f" format start_x) + "," + ("%.4f" format start_y) +
+				/* draw line */ " L " + num_formats._4(start_x) + "," + num_formats._4(start_y) +
 				// Set sweep-flag to 0 (to draw the arc in the standard direction)
-				/* draw arc */ " A " + r + "," + r + " 0 0 0 " + ("%.4f" format end_x) + "," + ("%.4f" format end_y) +
+				/* draw arc */ " A " + r + "," + r + " 0 0 0 " + num_formats._4(end_x) + "," + num_formats._4(end_y) +
 				/* close with line */ " Z"
 			)
 			
@@ -115,7 +126,7 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 				shape addChild <animateTransform
 					attributeName="transform" attributeType="XML"
 					type="scale" calcMode={CALC_MODE}
-					values={areas map {"%.2f" format math.sqrt(_)} mkString ";"}
+					values={areas map math.sqrt map num_formats._2 mkString ";"}
 					dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
 				/>.convert
 		}
@@ -125,7 +136,7 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 				shape addChild <animateTransform
 					attributeName="transform" attributeType="XML"
 					type="rotate" calcMode={CALC_MODE}
-					values={angles_deg map {"%.2f" format _} mkString ";"}
+					values={angles_deg map num_formats._2 mkString ";"}
 					dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
 					/>.convert
 		}
@@ -149,8 +160,7 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 			// Then draw a stroke around the entire semicircle (to create the boundary on the clipped sides).
 			val demand_sector_g = <g>
 				<g clip-path="url(#dcSectorChartDemandSideClip)">{demand_sectors map U}</g>
-				{U(draw_sector(0.5 * math.Pi, 1.5 * math.Pi, "transparent"))}
-			</g>.convert
+			</g>.convert addChild draw_sector(0.5 * math.Pi, 1.5 * math.Pi, "transparent")
 			// Scale the sectors as a group
 			demand_sector_g animate_radius demand_totals
 		}
@@ -180,10 +190,30 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 			// Then draw a stroke around the entire semicircle (to create the boundary on the clipped sides).
 			val supply_sector_g = <g>
 				<g clip-path="url(#dcSectorChartSupplySideClip)">{supply_sectors map U}</g>
-				{U(draw_sector(-0.5 * math.Pi, 0.5 * math.Pi, "transparent"))}
-			</g>.convert
+			</g>.convert addChild draw_sector(-0.5 * math.Pi, 0.5 * math.Pi, "transparent")
 			// Scale the sectors as a group    
 			supply_sector_g animate_radius supply_totals
+		}
+		
+		val battery : Elem = {
+			val battery_height : Double = 50.0 // @@@@@ TODO: read from BACKGROUND_MAP
+			
+			// Draw where the base of the battery is at (0, 0) and the battery extends down with increasing y, to (0, battery_height)
+			<g transform={"translate(0," + num_formats._1(-battery_height / 2) + ")"}>
+				<use xlink:href="#dcSectorChartBatteryOutline" style="fill: #fff"/>
+				<g clip-path="url(#dcSectorChartBatteryClip)">
+					<rect x="-3" width="6" y="0" height={num_formats._1(battery_height)}
+						fill={colors.storage} stroke="black" stroke-width="1">
+						<animate
+							attributeName="y"
+							calcMode={CALC_MODE}
+							values={storage_stats map (1 - _) map (_ * battery_height) map num_formats._2 mkString ";"}
+							dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
+						/>
+					</rect>
+				</g>
+				<use xlink:href="#dcSectorChartBatteryOutline" style="fill: none; stroke: #000; stroke-width: 1px;"/>
+			</g>.convert
 		}
 		
 		/** Relative radius of the ring according to the maximum energy demand of this DC. sqrt for equal area.*/
@@ -192,42 +222,41 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 		val bounding_circle = <circle
 			cx="0" cy="0" r={(r * ringSizeFactor).toString}
 			style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
-		/>
-		List(U(demand_side), U(supply_side), bounding_circle)
-	}</g>.convert
+		/>.convert
+		
+		<g style="opacity: 0.7;"/>.convert addChildren Group(demand_side, supply_side, bounding_circle, battery)
+	}
 	
 	// Translate everything to the desired data center location
-	<g transform={"translate(" + ("%.1f" format x) + "," + ("%.1f" format y) + ")"}>
-		{U(sector_g)}
-	</g>.convert
+	<g transform={"translate(" + num_formats._1(x) + "," + num_formats._1(y) + ")"}/>.convert addChild sector_g
 }
 
 /**
 Draws an animated line, displaying the given stats over time.
 The <em>start</em> of the line will be indicated with a dot.
 @return an SVG fragment to be inserted into the SVG document. */
-def draw_line(anim_time_per_step : Double, line : Line) : Group[Node] = {
+def draw_line(anim_time_per_step : Double, line : Line) : scala.xml.Elem = {
 	val Line(p1, p2, stats) = line
 	val dp1 = p1.toDevicePt
 	val dp2 = p2.toDevicePt
 	<g>
-		{U(draw_dot(p1))}
-		<line x1={"%.1f" format dp1.x} x2={"%.1f" format dp2.x} y1={"%.1f" format dp1.y} y2={"%.1f" format dp2.y}
+		{draw_dot(p1)}
+		<line x1={num_formats._1(dp1.x)} x2={num_formats._1(dp2.x)} y1={num_formats._1(dp1.y)} y2={num_formats._1(dp2.y)}
 			 style="stroke: hsl(0, 0%, 50%); stroke-width: 10px;">
 			<animate
 				attributeName="opacity"
 				calcMode={CALC_MODE}
-				values={stats map {"%.2f" format _.opacity} mkString ";"}
+				values={stats map (_.opacity) map num_formats._2 mkString ";"}
 				dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
 			/>
 			<animate
 				attributeName="stroke-width"
 				calcMode={CALC_MODE}
-				values={stats map {"%.4f" format _.width} mkString ";"}
+				values={stats map (_.width) map num_formats._4 mkString ";"}
 				dur={animation_duration(anim_time_per_step, stats.length)} fill="freeze"
 			/>
 		</line>
-	</g>.convert
+	</g>
 }
 
 /**
@@ -261,9 +290,9 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 		// Defines outline of sector
 		val path : String = (
 			/* center */ "M 0,0" +
-			/* draw line */ " L " + ("%.4f" format start_x) + "," + ("%.4f" format start_y) +
+			/* draw line */ " L " + num_formats._4(start_x) + "," + num_formats._4(start_y) +
 			// Set sweep-flag to 0 (to draw the arc in the standard direction)
-			/* draw arc */ " A " + r + "," + r + " 0 0 0 " + ("%.4f" format end_x) + "," + ("%.4f" format end_y) +
+			/* draw arc */ " A " + r + "," + r + " 0 0 0 " + num_formats._4(end_x) + "," + num_formats._4(end_y) +
 			/* close with line */ " Z"
 		)
 		
@@ -402,7 +431,7 @@ def draw_line_plot(stats : Seq[LinePlotStat], anim_time_per_step : Double, numSt
 				stat.vals.zipWithIndex map {case (v, t) ⇒ 
 					val horiz = (t.toDouble / numSteps) * line_plot_width
 					val vert = (1 - v) * main_plot_height
-					"%.2f,%.2f" format (horiz, vert)
+					num_formats._2(horiz) + "," + num_formats._2(vert)
 				} mkString " "
 			}
 		/>.convert
@@ -447,7 +476,7 @@ def generate_visualization(anim_time_per_step : Double, world_time_per_step : Do
 	val timing_metadata : Elem = <timing id="timing" xmlns="http://rsrg.cms.caltech.edu/xml/2012/timing"
 		numSteps={num_steps.toString}
 		timelapseFactor={"%f" format timelapse_factor}
-		duration={"%.4f" format (num_steps * anim_time_per_step)}
+		duration={num_formats._4(num_steps * anim_time_per_step)}
 	/>.convert
 	
 	var doc : Elem = {
@@ -459,7 +488,7 @@ def generate_visualization(anim_time_per_step : Double, world_time_per_step : Do
 	doc = doc addChild draw_line_plot(line_plot_stats, anim_time_per_step, num_steps)
 	
 	val overlay = <g id="overlay">
-		{lineData map (line ⇒ U(draw_line(anim_time_per_step, line)))}
+		{lineData map (line ⇒ draw_line(anim_time_per_step, line))}
 		{dcdata map (dc ⇒ U(draw_datacenter(anim_time_per_step, dc, dccolors)))}
 	</g>.convert
 	
