@@ -34,12 +34,7 @@ object Main {def main(args : Array[String]) = {
 		
 		datacenter_location.zipWithIndex map {case (dc_loc, dc) ⇒
 			val solar_for_dc = solar map (_(dc))
-			// There are 2 solar readings for each wind reading. For now, double each wind reading to match them:
-			val wind_for_dc = {
-				val raw = wind map (_(dc))
-				// interleave with self
-				(raw, raw).zipped flatMap (List(_, _))
-			}
+			val wind_for_dc = wind map (_(dc))
 			val cooling_for_dc = cooling map (_(dc))
 			val total_for_dc = total map (_(dc))
 			DataCenter(dc_loc, solar_for_dc zip wind_for_dc zip total_for_dc zip cooling_for_dc map {case (((sstr, wstr), tstr),cstr) ⇒
@@ -60,6 +55,7 @@ object Main {def main(args : Array[String]) = {
 					(t max 0) / max_demand
 				)
 			})
+			//throw(new Exception)
 		}
 	}
 
@@ -118,8 +114,9 @@ object Main {def main(args : Array[String]) = {
 		List(
 			LinePlotStat(/* Total energy demand of all DCs */"#FFFF00", foldDCs(_.demands match {case (t, c) ⇒ t}) map (_/max_Σ_supply)),
 			LinePlotStat(/* Total brown energy usage of all DCs */"brown", foldDCs(_.supplies match {case (_, _, g) ⇒ g}) map (_/max_Σ_supply)),
-			LinePlotStat(/* Total renewables available over all DCs */"#00FF00", foldDCs(_.supplies match {case (s, w, _) ⇒ s + w}) map (_/max_Σ_supply)),
-		     LinePlotStat(/* Total renewables available over all DCs */"blue", foldDCs(_.demands match {case (t, c) ⇒ c}) map (_/max_Σ_supply))
+			LinePlotStat(/* Total wind energy available */"#0F0", foldDCs(_.supplies match {case (s, w, _) ⇒ w}) map (_/max_Σ_supply)),
+			LinePlotStat(/* Total solar energy available */"#0A8", foldDCs(_.supplies match {case (s, w, _) ⇒ s}) map (_/max_Σ_supply)),
+		     LinePlotStat(/* Total energy used for cooling of all DCs */"blue", foldDCs(_.demands match {case (t, c) ⇒ c}) map (_/max_Σ_supply))
 		)
 	}
 	

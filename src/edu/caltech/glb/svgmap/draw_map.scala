@@ -234,7 +234,7 @@ def draw_line(anim_time_per_step : Double, line : Line) : Group[Node] = {
 Draws a legend identifying the colors used.
 */
 def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem = {
-	val stats : Seq[(String, String)] = (labels.demands.asSeq(1) +: labels.supplies.asSeq) zip (colors.demands.asSeq(1) +: colors.supplies.asSeq)
+	val stats : Seq[(String, String)] = (labels.demands.asSeq ++ labels.supplies.asSeq) zip (colors.demands.asSeq ++ colors.supplies.asSeq)
 	val NUM_SUPPLY_SECTORS = colors.supplies.productArity
 	val NUM_DEMAND_SECTORS = colors.demands.productArity
 	val r = 40
@@ -247,7 +247,7 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 			<text x={(length + space).toString} y={(height + 5).toString} font-size="16px">{labelText}</text>
 		</g>.convert
 	}
-	val lineplot_legends = (0 until 4 map { s ⇒ {
+	val lineplot_legends = (0 until 5 map { s ⇒ {
 		val length = 50
 		val (label, color) = stats(s)
 		draw_lineplot_legend(length, s*20, color, label)}}
@@ -306,7 +306,7 @@ def draw_legend(labels : DataCenterLegendText, colors : DataCenterColors) : Elem
 	val ringLabelLine = draw_segment(r * 1.2, 24, 1.0 * math.Pi)
 	val legends_bottom_margin = LINE_PLOT_MARGIN * 2 + LINE_PLOT_HEIGHT
 	// Legend box sizes
-	val (lineLegendWidth, lineLegendHeight) = (135, 60)
+	val (lineLegendWidth, lineLegendHeight) = (135, 75)
 	val (pieLegendWidth, pieLegendHeight) = (193, 135)
 	// Display the legend.
 	<g>
