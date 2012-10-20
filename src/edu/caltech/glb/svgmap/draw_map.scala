@@ -224,7 +224,7 @@ def draw_datacenter(anim_time_per_step : Double, dc : DataCenter, colors : DataC
 			style="fill: none; stroke: black; stroke-width: 1px; opacity: 0.3;"
 		/>.convert
 		
-		<g style="opacity: 0.7;"/>.convert addChildren Group(demand_side, supply_side, bounding_circle, battery)
+		<g style="opacity: 0.7;"/>.convert addChildren Group(demand_side, supply_side, bounding_circle)
 	}
 	
 	// Translate everything to the desired data center location
